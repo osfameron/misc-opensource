@@ -20,10 +20,10 @@ right' :: Cell a -> Cell a
 right' c@(Cell {}) = right c
 right' Nil         = Nil
 
-zipRow :: [a] -> Cell a -> Cell a
-zipRow xs c = foldr mkCell Nil valAndDown
+mkRow :: [a] -> Cell a -> Cell a
+mkRow xs c = foldr mkCell Nil valAndDown
     where valAndDown = zip xs (iterate right' c)
           mkCell (v,d) r = Cell { value=v, down=d, right=r }
 
-zipGrid :: [[a]] -> Cell a
-zipGrid = foldr zipRow Nil
+mkGrid :: [[a]] -> Cell a
+mkGrid = foldr mkRow Nil
