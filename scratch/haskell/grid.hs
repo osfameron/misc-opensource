@@ -1,3 +1,4 @@
+import Data.Maybe
 
 -- we want to fold something like this
 g = [
@@ -10,20 +11,15 @@ g = [
 
 data Cell a = Cell {
     value :: a,
-    down  :: Cell a,
-    right :: Cell a
+    down  :: Maybe (Cell a),
+    right :: Maybe (Cell a)
     }
-    | Nil
     deriving Show
 
-right' :: Cell a -> Cell a
-right' c@(Cell {}) = right c
-right' Nil         = Nil
-
-mkRow :: [a] -> Cell a -> Cell a
-mkRow xs c = foldr mkCell Nil valAndDown
-    where valAndDown = zip xs (iterate right' c)
-          mkCell (v,d) r = Cell { value=v, down=d, right=r }
+mkRow :: [a] -> Maybe (Cell a) -> Maybe (Cell a)
+mkRow xs c = foldr mkCell Nothing valAndDown
+    where valAndDown     = zip xs $ iterate (>>= right) c
+          mkCell (v,d) r = Just $ Cell { value=v, down=d, right=r }
 
 mkGrid :: [[a]] -> Cell a
-mkGrid = foldr mkRow Nil
+mkGrid = fromJust . foldr mkRow Nothing
