@@ -6,8 +6,6 @@ use Fixed::Column;
 use Moose::Exporter;
 
 use DateTime::Format::DateParse;;
-
-use Params::Coerce ();
 use Moose::Util::TypeConstraints;
 
 subtype 'My.DateTime' =>
