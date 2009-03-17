@@ -12,6 +12,5 @@ has range => (
     );
 
 sub Moose::Meta::Attribute::Custom::Trait::Fixed { 'Fixed::Trait' };
-}
 
 1;

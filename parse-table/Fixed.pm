@@ -2,17 +2,18 @@
 
 package Fixed;
 use Moose ();
+use Fixed::Trait;
 use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
    with_caller => ['column'],
-   also        => 'Moose',
+   also        => ['Moose' ],
 );
 
 sub column {
     my $caller = shift;
     my ($name, %pars) = @_;
-    $caller->meta->has($name => (
+    $caller->has($name => (
         traits => ['Fixed'],
         is     => 'ro',
         isa    => 'Str', # default
