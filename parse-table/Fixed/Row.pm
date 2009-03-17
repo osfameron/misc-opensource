@@ -3,7 +3,7 @@
 package Fixed::Row;
 
 use Fixed;
-use Fixed::Trait;
+use Fixed::Column;
 
 sub parse {
     my ($self, $string) = @_;

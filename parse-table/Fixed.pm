@@ -2,7 +2,7 @@
 
 package Fixed;
 use Moose ();
-use Fixed::Trait;
+use Fixed::Column;
 use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
@@ -14,7 +14,7 @@ sub column {
     my $caller = shift;
     my ($name, %pars) = @_;
     $caller->has($name => (
-        traits => ['Fixed'],
+        traits => ['Column'],
         is     => 'ro',
         isa    => 'Str', # default
         %pars,
