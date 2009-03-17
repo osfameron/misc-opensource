@@ -5,13 +5,8 @@ use Fixed;
 use Fixed::Row;
 extends 'Fixed::Row';
 
-column first => (
-    range  => [0, 4]
-    );
-
-column last => (
-    range  => [5, 11]
-    );
+column first => range  => [0, 4 ];
+column last  => range  => [5, 11];
 
 package main;
 

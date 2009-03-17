@@ -11,6 +11,6 @@ has range => (
     predicate => 'has_range',
     );
 
-sub Moose::Meta::Attribute::Custom::Trait::Column { 'Fixed::Column' };
+sub Moose::Meta::Attribute::Custom::Trait::Column::register_implementation { 'Fixed::Column' };
 
 1;
