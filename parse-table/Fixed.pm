@@ -29,15 +29,12 @@ sub column {
     my $caller = shift;
     my ($name, %pars) = @_;
     $pars{coerce}++ if ($pars{isa}||='Str') =~ /^My\./;
-    eval <<"EOHACK";
-package $caller;
-has $name => (
-    traits => ['Column'],
-    is     => 'ro',
-    %pars,
-    );
-EOHACK
-die $@ if $@;
+    Moose::has( $caller => 
+        $name => (
+            traits => ['Column'],
+            is     => 'ro',
+            %pars,
+            ));
 }
 
 1;
