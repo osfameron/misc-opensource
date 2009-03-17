@@ -15,10 +15,7 @@ subtype 'My.DateTime' =>
 
 coerce 'My.DateTime'
     => from 'Str'
-        => via {
-                 my $date = DateTime::Format::DateParse->parse_datetime( $_ );
-                 warn "Gots $date ($_)";
-                 $date; };
+        => via { DateTime::Format::DateParse->parse_datetime( $_ ) };
 
 Moose::Exporter->setup_import_methods(
    with_caller => ['column'],
