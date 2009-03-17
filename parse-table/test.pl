@@ -4,28 +4,13 @@ package Row::Name;
 use Fixed;
 extends 'Fixed::Row';
 
-use DateTime::Format::DateParse;;
-
-use Params::Coerce ();
-use Moose::Util::TypeConstraints;
-
-subtype 'My.DateTime' =>
-    as class_type('DateTime');
-
-coerce 'My.DateTime' 
-    => from 'Str'
-        => via { 
-                 my $date = DateTime::Format::DateParse->parse_datetime( $_ );
-                 warn "Gots $date ($_)";
-                 $date; };
-
 column first => range  => [0, 4 ];
 column last  => range  => [5, 11];
-column date  => range  => [12, 22], isa => 'My.DateTime', coerce => 1;
+column date  => range  => [12, 22], isa => 'My.DateTime';
 
 package main;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 my $obj = Row::Name->parse('Fred Bloggs 2009-03-17');
 

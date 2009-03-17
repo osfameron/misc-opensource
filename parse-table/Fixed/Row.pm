@@ -15,6 +15,7 @@ sub parse {
         $v->has_range ?
             do {
                 my ($from, $to) = @{ $v->range };
+                $to ||= $from;
                 ($k => substr($string, $from, $to-$from) );
                 }
             : ();
