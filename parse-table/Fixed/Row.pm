@@ -6,7 +6,7 @@ use Fixed;
 use Fixed::Column;
 
 use Moose::Util::TypeConstraints;
-use DateTime::Format::DateParse;
+use DateTime::Format::Strptime;
 use DateTime::Format::Duration;
 
 subtype 'Date' =>
@@ -14,7 +14,12 @@ subtype 'Date' =>
 
 coerce 'Date'
     => from 'Str'
-        => via { DateTime::Format::DateParse->parse_datetime( $_ ) };
+        => via { 
+            my $f = DateTime::Format::Strptime->new( pattern => '%F' );
+            my $d = $f->parse_datetime( $_ );
+            $d->set_formatter($f);
+            $d;
+            };
 
 subtype 'Duration' =>
     as class_type('DateTime::Duration');
@@ -22,8 +27,11 @@ subtype 'Duration' =>
 coerce 'Duration'
     => from 'Str'
         => via { 
-            my $d = DateTime::Format::Duration->new( pattern => '%H:%M' );
-            $d->parse_duration( $_ );
+            my $f = DateTime::Format::Duration->new( pattern => '%R' );
+            my $d = $f->parse_duration( $_ );
+            # $d->{formatter} = $f;                      # direct access! Yuck!
+            bless $d, 'DateTime::Duration::Formatted'; # rebless!
+            return $d;
             };
 
 sub parse {
@@ -43,5 +51,15 @@ sub parse {
 
     return $class->new( %data );
 }
+
+package DateTime::Duration::Formatted;
+our @ISA = 'DateTime::Duration';
+
+use overload q("") => sub {
+    my ($self) = @_;
+    # return $self->{formatter}->format_duration($self);
+    # DT::F::D is broken
+    return sprintf '%02d:%02d', $self->hours, $self->minutes;
+    };
 
 1;
