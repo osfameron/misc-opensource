@@ -23,7 +23,11 @@ Moose::Exporter->setup_import_methods(
 sub column {
     my $caller = shift;
     my ($name, %pars) = @_;
-    $pars{coerce}++ if ($pars{isa}||='Str') =~ /^My\./;
+    $pars{isa} ||= 'Str';
+    $pars{coerce}++ if do {
+        my $t = find_type_constraint($pars{isa});
+        $t && $t->has_coercion;
+        };
     Moose::has( $caller => 
         $name => (
             traits => ['Column'],
