@@ -5,25 +5,28 @@ use Fixed;
 extends 'Fixed::Row';
 
 column first    => range=>[0 , 3];
-column last     => range=>[5 ,10];
-column date     => range=>[12,21], isa =>'Date';
-column duration => range=>[23,27], isa =>'Duration';
+column middle   => range=> 5;
+column last     => range=>[7 ,12];
+column date     => range=>[14,23], isa =>'Date';
+column duration => range=>[25,29], isa =>'Duration';
 
 #######################################################
 package main;
 
 use Test::More tests => 7;
 
-my $obj = Row::Test->parse('Fred Bloggs 2009-03-17 02:03');
+my $obj = Row::Test->parse('Fred J Bloggs 2009-03-17 02:03');
                            #          1         2
-                           #0123456789012345678901234567
+                           #012345678901234567890123456789
                            #0..3
-                           #     5...10
-                           #            12......21
-                           #                       23.27
+                           #     5
+                           #       7...12
+                           #              14......23
+                           #                         25.29
 
 isa_ok $obj,           'Row::Test';
 is $obj->first,        'Fred';
+is $obj->middle,       'J';
 is $obj->last,         'Bloggs';
 isa_ok $obj->date,     'DateTime';
 isa_ok $obj->duration, 'DateTime::Duration';
