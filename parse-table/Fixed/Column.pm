@@ -18,7 +18,7 @@ has range => (
 
 coerce 'FromTo'
     => from 'Int'
-        => via { [$_, $_] }
+        => via { [($_)  x 2] }
     => from Tuple[Int]
         => via { [(@$_) x 2] };
 

@@ -13,7 +13,7 @@ column duration => range=>[25,29], isa =>'Duration';
 #######################################################
 package main;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 my $obj = Row::Test->parse('Fred J Bloggs 2009-03-17 02:03');
                            #          1         2
