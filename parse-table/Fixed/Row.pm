@@ -7,13 +7,24 @@ use Fixed::Column;
 
 use Moose::Util::TypeConstraints;
 use DateTime::Format::DateParse;
+use DateTime::Format::Duration;
 
-subtype 'My.DateTime' =>
+subtype 'Date' =>
     as class_type('DateTime');
 
-coerce 'My.DateTime'
+coerce 'Date'
     => from 'Str'
         => via { DateTime::Format::DateParse->parse_datetime( $_ ) };
+
+subtype 'Duration' =>
+    as class_type('DateTime::Duration');
+
+coerce 'Duration'
+    => from 'Str'
+        => via { 
+            my $d = DateTime::Format::Duration->new( pattern => '%H:%M' );
+            $d->parse_duration( $_ );
+            };
 
 sub parse {
     my ($self, $string) = @_;
@@ -26,7 +37,7 @@ sub parse {
             do {
                 my ($from, $to) = @{ $v->range };
                 $to ||= $from;
-                ($k => substr($string, $from, $to-$from) );
+                ($k => substr($string, $from, $to-$from+1) );
                 }
             : ();
         } keys %attributes;
