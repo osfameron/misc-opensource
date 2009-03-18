@@ -29,7 +29,7 @@ coerce 'Duration'
         => via { 
             my $f = DateTime::Format::Duration->new( pattern => '%R' );
             my $d = $f->parse_duration( $_ );
-            # $d->{formatter} = $f;                      # direct access! Yuck!
+            $d->{formatter} = $f;                      # direct access! Yuck!
             bless $d, 'DateTime::Duration::Formatted'; # rebless!
             return $d;
             };
@@ -57,9 +57,8 @@ our @ISA = 'DateTime::Duration';
 
 use overload q("") => sub {
     my ($self) = @_;
-    # return $self->{formatter}->format_duration($self);
-    # DT::F::D is broken
-    return sprintf '%02d:%02d', $self->hours, $self->minutes;
+    my $f = $self->{formatter};
+    return $f->format_duration_from_deltas($f->normalise($self));
     };
 
 1;

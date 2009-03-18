@@ -13,7 +13,7 @@ column duration => range=>[25,29], isa =>'Duration';
 #######################################################
 package main;
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 
 my $obj = Row::Test->parse('Fred J Bloggs 2009-03-17 02:03');
                            #          1         2
@@ -33,6 +33,9 @@ isa_ok $obj->duration, 'DateTime::Duration';
 
 is $obj->date->day, 17,                      'Day parsed ok';
 is $obj->duration->in_units('minutes'), 123, 'Duration parsed ok';
+
+is ''.$obj->date,     '2009-03-17',  'Format date';
+is ''.$obj->duration, '02:03',       'Format duration';
 
 use Data::Dumper;
 local $Data::Dumper::Maxdepth=1; local $Data::Dumper::Indent = 1;
