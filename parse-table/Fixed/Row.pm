@@ -5,6 +5,16 @@ package Fixed::Row;
 use Fixed;
 use Fixed::Column;
 
+use Moose::Util::TypeConstraints;
+use DateTime::Format::DateParse;
+
+subtype 'My.DateTime' =>
+    as class_type('DateTime');
+
+coerce 'My.DateTime'
+    => from 'Str'
+        => via { DateTime::Format::DateParse->parse_datetime( $_ ) };
+
 sub parse {
     my ($self, $string) = @_;
     my $class = ref $self || $self;
