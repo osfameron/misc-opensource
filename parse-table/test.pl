@@ -17,9 +17,20 @@ column duration => range=>[29,33], isa =>'Duration';
              #        7...12
              #                 16......25
              #                              29.33
-Row::Test->picture(
+
+package Row::Test::WithPicture;
+use Fixed;
+extends 'Row::Test';
+
+# WTF?  Why aren't these inherited?
+column first    => range=>[0 , 3];
+# etc.
+
+# why does this picture also apply to parent class?
+Row::Test::WithPicture->picture(
               '              |            |      ' 
             );
+
 $Test::Data = 'Fred J Bloggs | 2009-03-17 | 02:03';
 
 #######################################################
@@ -42,5 +53,12 @@ is $obj->duration->in_units('minutes'), 123, 'Duration parsed ok';
 is ''.$obj->date,     '2009-03-17',  'Format date';
 is ''.$obj->duration, '02:03',       'Format duration';
 
-is $obj->output, $Test::Data, 'Round trip output';
-is ''.$obj,      $Test::Data, '... with overloading';
+(my $expected = $Test::Data) =~tr/|/ /;
+
+is $obj->output, $expected, 'Round trip output (with spaces)';
+is ''.$obj,      $expected, '... with overloading';
+
+my $obj2 = Row::Test::WithPicture->parse( $Test::Data );
+diag $obj2->picture;
+is $obj2->output, $Test::Data, 'Round trip output (explicit picture)';
+is ''.$obj2,      $Test::Data, '... with overloading';

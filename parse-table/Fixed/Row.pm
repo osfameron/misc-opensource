@@ -9,6 +9,7 @@ use MooseX::ClassAttribute;
 use Moose::Util::TypeConstraints;
 use DateTime::Format::Strptime;
 use DateTime::Format::Duration;
+use List::Util qw/max/;
 
 use overload q("") => sub { $_[0]->output };
 
@@ -16,9 +17,14 @@ class_has picture => (
     is        => 'rw',
     isa       => 'Str',
     predicate => 'has_picture',
-    lazy      => 1,
-    default   => sub { 'TODO' },
     );
+
+sub get_picture {
+    my $self = shift;
+    my %ranges = $self->range_attributes;
+    my @ends = map { $_->range->[1] } values %ranges;
+    return ' ' x max @ends;
+}
 
 subtype 'Date' =>
     as class_type('DateTime');
@@ -76,12 +82,16 @@ sub output {
     my ($self) = @_;
 
     my %ranges = $self->range_attributes;
-    my $string = $self->picture;
+
+    my $string = $self->has_picture ? $self->picture : $self->picture($self->get_picture);
 
     for my $v (values %ranges) {
         my ($from, $to) = @{ $v->range };
         my $length = $to-$from;
-        substr( $string, $from, $length+1, sprintf("\%${length}s", $v->get_value($self)) );
+        substr( $string, 
+                $from => $length+1, 
+                sprintf("\%${length}s", 
+                    $v->get_value($self)));
     }
     return $string;
 }
