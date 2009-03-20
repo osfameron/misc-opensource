@@ -55,25 +55,20 @@ sub range_attributes {
     my $self = shift;
     my $class = ref $self || $self;
 
-    my %attributes = %{ $class->meta->get_attribute_map };
-    return map { 
-        my ($k, $v) = ($_, $attributes{$_});
-        $v->has_range ?  ($k, $v) : (); 
-        } 
-        keys %attributes;
+    my @attributes = $class->meta->get_all_attributes;
+    return grep { $_->has_range } @attributes;
 }
 
 sub parse {
     my ($self, $string) = @_;
     my $class = ref $self || $self;
 
-    my %ranges = $class->range_attributes;
+    my @ranges = $class->range_attributes;
 
-    my %data;
-    while (my ($k, $v) = each %ranges) {
-        my ($from, $to) = @{ $v->range };
-        $data{$k} = substr($string, $from, $to-$from+1);
-    }
+    my %data = map {
+        my ($from, $to) = @{ $_->range };
+        ($_->name, substr($string, $from, $to-$from+1));
+        } @ranges;
 
     return $class->new( %data );
 }
@@ -81,11 +76,11 @@ sub parse {
 sub output {
     my ($self) = @_;
 
-    my %ranges = $self->range_attributes;
+    my @ranges = $self->range_attributes;
 
     my $string = $self->has_picture ? $self->picture : $self->picture($self->get_picture);
 
-    for my $v (values %ranges) {
+    for my $v (@ranges) {
         my ($from, $to) = @{ $v->range };
         my $length = $to-$from;
         substr( $string, 

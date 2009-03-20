@@ -22,12 +22,8 @@ package Row::Test::WithPicture;
 use Fixed;
 extends 'Row::Test';
 
-# WTF?  Why aren't these inherited?
-column first    => range=>[0 , 3];
-# etc.
-
-# why does this picture also apply to parent class?
-Row::Test::WithPicture->picture(
+# Gah!  Mx::ClassAttribute works not to my expectation...
+__PACKAGE__->picture(
               '              |            |      ' 
             );
 
@@ -36,9 +32,14 @@ $Test::Data = 'Fred J Bloggs | 2009-03-17 | 02:03';
 #######################################################
 package main;
 
-use Test::More tests => 12;
+use Test::More tests => 14;
 
 my $obj = Row::Test->parse( $Test::Data );
+
+my @fields = (qw/ first middle last date duration /);
+
+can_ok 'Row::Test',              @fields;
+can_ok 'Row::Test::WithPicture', @fields;
 
 isa_ok $obj,           'Row::Test';
 is $obj->first,        'Fred';
