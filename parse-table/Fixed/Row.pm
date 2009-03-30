@@ -13,18 +13,18 @@ use List::Util qw/max/;
 
 use overload q("") => sub { $_[0]->output };
 
-class_has picture => (
-    is        => 'rw',
-    isa       => 'Str',
-    predicate => 'has_picture',
-    );
+subtype 'My::MMA' =>
+    as class_type('Moose::Meta::Attribute');
 
-sub get_picture {
-    my $self = shift;
-    my %ranges = $self->range_attributes;
-    my @ends = map { $_->range->[1] } values %ranges;
-    return ' ' x max @ends;
-}
+class_has fields => (
+    metaclass => 'Collection::Array',
+    default   => sub { [] },
+    is        => 'rw',
+    isa       => 'ArrayRef[Str|My::MMA]',
+    provides  => {
+        push => 'add_field',
+        },
+    );
 
 subtype 'Date' =>
     as class_type('DateTime');
@@ -51,23 +51,30 @@ coerce 'Duration'
             return $d;
             };
 
-sub range_attributes {
-    my $self = shift;
-    my $class = ref $self || $self;
-
-    my @attributes = $class->meta->get_all_attributes;
-    return grep { $_->has_range } @attributes;
-}
-
 sub parse {
     my ($self, $string) = @_;
     my $class = ref $self || $self;
 
-    my @ranges = $class->range_attributes;
+    my @ranges = @{ $class->fields };
 
+    # use Data::Dumper; local $Data::Dumper::Maxdepth = 2; die Dumper(\@ranges);
+
+    my $pos = 0;
     my %data = map {
-        my ($from, $to) = @{ $_->range };
-        ($_->name, substr($string, $from, $to-$from+1));
+        if (ref) {
+            # it's an attribute
+            my $width = $_->width;
+            my $name  = $_->name;
+            my $value = substr($string, $pos, $width);
+            $pos += $width;
+            ($name => $value);
+        } else {
+            # it's a string
+            my $width = length;
+            substr($string, $pos, $width) eq $_ or die "Invalid parse on picture '$_' ($pos)";
+            $pos += $width;
+            ();
+        }
         } @ranges;
 
     return $class->new( %data );
@@ -76,18 +83,15 @@ sub parse {
 sub output {
     my ($self) = @_;
 
-    my @ranges = $self->range_attributes;
+    my @ranges = @{ $self->fields };
 
-    my $string = $self->has_picture ? $self->picture : $self->picture($self->get_picture);
-
-    for my $v (@ranges) {
-        my ($from, $to) = @{ $v->range };
-        my $length = $to-$from;
-        substr( $string, 
-                $from => $length+1, 
-                sprintf("\%${length}s", 
-                    $v->get_value($self)));
-    }
+    my $string = join '', map {
+        if (ref) {
+            my $width = $_->width;
+            sprintf "\%${width}s", $_->get_value($self);
+        } else {
+            $_
+        }} @ranges;
     return $string;
 }
 
