@@ -10,13 +10,13 @@ sub import {
 
     Devel::Declare->setup_for( 
         $caller => { 
-            gosub  => { const => mk_parse_gosub($caller) },
-            retsub => { const => mk_parse_retsub($caller) },
+            gosub   => { const => mk_parse_gosub  ($caller) },
+            greturn => { const => mk_parse_greturn($caller) },
                    } );
 
     no strict 'refs';
-    *{$caller.'::gosub'} = sub {};
-    *{$caller.'::retsub'} = sub {};
+    *{$caller.'::gosub'}   = sub () {1};
+    *{$caller.'::greturn'} = sub () {1};
 }
 
 {
@@ -36,12 +36,12 @@ sub import {
 
             my $linestr = Devel::Declare::get_linestr();
             substr($linestr, $Offset) 
-                = qq{; local \$Gosub::Comefrom = "$LABEL"; goto $name; $LABEL\: };
+                = qq{and local \$Gosub::Comefrom = "$LABEL"; goto $name; $LABEL\: };
             Devel::Declare::set_linestr($linestr);
             $LABEL++;
           };
     }
-    sub mk_parse_retsub {
+    sub mk_parse_greturn {
         my $package = shift;
         return sub {
             local ($Declarator, $Offset) = @_;
