@@ -3,7 +3,7 @@
 use strict; use warnings;
 use Data::Dumper;
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 use Sub::Section;
 
@@ -24,9 +24,12 @@ is op($x-)->(1),
    4,
    'curried with $x in current scope';
 
-is op("Hello ".)->("World"),
+is op(q/Hello /.)->("World"),
    "Hello World",
    'String section';
+is op(.q/ World/)->("Hello"),
+   "Hello World",
+   'String section 2';
 
 is_deeply [ grep op(%2)->($_), (1..5) ], [1,3,5],      'With grep on (%2)';
 is_deeply [ map  op(*2)->($_), (1..5) ], [2,4,6,8,10], 'With map on (*2)';
@@ -40,7 +43,6 @@ is_deeply [ grep op('foo'=~)->($_),  'a'..'z' ],
           [qw/f o/], 
           'Grep on ("foo"=~)';
 
-# NB: (=~/a/) doesn't work at mo.  slashes in the (...) seem to confuse it?
-is_deeply [ grep op(=~qr{a})->($_),    qw/foo bar baz/ ], 
+is_deeply [ grep op(=~qr/a/)->($_),    qw/foo bar baz/ ], 
           [qw/bar baz/], 
-          'Grep on (=~qr{a})';
+          'Grep on (=~qr/a/)';
