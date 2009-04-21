@@ -3,13 +3,17 @@
 use strict; use warnings;
 use Data::Dumper;
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 
 use Sub::Section;
 
 is op(+)->(3, 4),
    7,
    'op (+) ok';
+
+is op(-)->(2, 1),
+   1,
+   'op (-) ok, e.g. in right order';
 
 is op(5-)->(3),
    2,

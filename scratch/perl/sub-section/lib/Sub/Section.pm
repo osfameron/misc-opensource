@@ -50,17 +50,14 @@ sub mk_op {
 
     my ($fn, @args);
 
-    if ($string =~ /^($bin_re)(.*)$/) {
-        return (
-            flip(mk_binop($1)), 
-            $2 ? ($2) : ()
-            );
+    if ($string =~ /^($bin_re)$/) {
+        return mk_binop($1);
+    }
+    elsif ($string =~ /^($bin_re)(.*)$/) {
+        return ( flip(mk_binop($1)), $2);
     }
     elsif ($string =~ /^(.*)($bin_re)$/) {
-        return (
-            mk_binop($2), 
-            $1 ? ($1) : ()
-            );
+        return ( mk_binop($2), $1 );
     }
 }
 
