@@ -3,13 +3,13 @@
 use strict; use warnings;
 use Data::Dumper;
 
-use Test::More tests => 9;
+use Test::More tests => 12;
 
 use Sub::Section;
 
-is op(+)->(3)->(4),
+is op(+)->(3, 4),
    7,
-   'section + ok';
+   'op (+) ok';
 
 is op(5-)->(3),
    2,
@@ -19,11 +19,6 @@ is op(-5)->(3),
    -2,
    'section (-5) ok';
 
-is_deeply [ grep op(%2)->($_), (1..5) ], [1,3,5],      'With grep on (%2)';
-is_deeply [ map  op(*2)->($_), (1..5) ], [2,4,6,8,10], 'With map on (*2)';
-is_deeply [ grep op(>2)->($_), (1..5) ], [3,4,5],      'With grep on (>2)';
-is_deeply [ grep op(2>)->($_), (1..5) ], [1],          'With grep on (2>)';
-
 my $x = 5;
 is op($x-)->(1),
    4,
@@ -31,4 +26,21 @@ is op($x-)->(1),
 
 is op("Hello ".)->("World"),
    "Hello World",
-   'Hello World';
+   'String section';
+
+is_deeply [ grep op(%2)->($_), (1..5) ], [1,3,5],      'With grep on (%2)';
+is_deeply [ map  op(*2)->($_), (1..5) ], [2,4,6,8,10], 'With map on (*2)';
+is_deeply [ grep op(>2)->($_), (1..5) ], [3,4,5],      'With grep on (>2)';
+is_deeply [ grep op(2>)->($_), (1..5) ], [1],          'With grep on (2>)';
+
+is_deeply [ grep op(ne "foo")->($_), qw/foo bar baz/ ], 
+          [qw/bar baz/], 
+          'Grep on (ne "foo")';
+is_deeply [ grep op('foo'=~)->($_),  'a'..'z' ], 
+          [qw/f o/], 
+          'Grep on ("foo"=~)';
+
+# NB: (=~/a/) doesn't work at mo.  slashes in the (...) seem to confuse it?
+is_deeply [ grep op(=~qr{a})->($_),    qw/foo bar baz/ ], 
+          [qw/bar baz/], 
+          'Grep on (=~qr{a})';
