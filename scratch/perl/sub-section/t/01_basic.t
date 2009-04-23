@@ -28,6 +28,10 @@ is op($x-)->(1),
    4,
    'curried with $x in current scope';
 
+# TODO override the () of RHS in -> case!
+# my $foo = op(->{foo});
+# is ($foo->( {foo=>'bar'} ), 'bar', 'accessor works');
+
 is op(q/Hello /.)->("World"),
    "Hello World",
    'String section';

@@ -27,7 +27,9 @@ sub mk_op {
     # from perldoc perlop
 
     no warnings 'qw';
-    my @binops = qw{
+    my @binops = 
+        sort { length $b <=> length $a }
+        qw{
         ->
         **
         =~ !~
@@ -69,7 +71,7 @@ memoize 'mk_binop';
 
 sub mk_curry {
     my ($fn, $n, @args) = @_;
-    return sub {
+    return bless sub {
         my $num_args = @args + @_;
         if ($num_args > $n) {
             croak "Called with $num_args, expected $n";
@@ -80,7 +82,7 @@ sub mk_curry {
         else {
             return $fn->(@args, @_);
         }
-        };
+        }, 'ComposableSub';
 }
 sub flip {
     my ($fn) = @_; # assume binop
@@ -126,17 +128,12 @@ sub flip {
         Devel::Declare::set_linestr($linestr);
     }
 
-    # This parser is likely to be semi-standard
-    # It will call a make_proto_unwrap, which is likely to be heavily customized
     sub parse_op {
         local ($Declarator, $Offset) = @_;
         skip_declarator;
         my $proto = strip_proto;
-
         my ($fn, $arg) = mk_op($proto);
-
-        inject( length $arg ? "->($arg)" : '' );
-
+        inject( $arg ? "->($arg)" : '' );
         shadow($fn);
     }
 
