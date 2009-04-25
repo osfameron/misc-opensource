@@ -82,7 +82,7 @@ sub mk_curry {
         else {
             return $fn->(@args, @_);
         }
-        }, 'ComposableSub';
+        }, 'Sub::Composable';
 }
 sub flip {
     my ($fn) = @_; # assume binop
