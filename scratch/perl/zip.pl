@@ -19,7 +19,6 @@ class Zip {
 
     method traverse ($self: Str $child) {
         my $node = $self->node;
-        warn "Node is $node";
         my $new_node = blessed $node ? $node->$child : $node->{$child}; # POC only
         return Zip->new(
             node    => $new_node,
@@ -44,7 +43,6 @@ class Zip {
     method change_with ($self: CodeRef $code) {
         my $node = $self->node;
         my $new_node = $code->($node);
-        warn "New node is $node -> $new_node";
         return Zip->new(
             node    => $new_node,
             path_up => $self->path_up,
@@ -81,11 +79,39 @@ use Data::Dumper;
 
 my $x = { foo => { bar => { baz => 1 } } };
 
-my $y = Zip->new(node=>$x)
+my $x1 = { %$x, foo => { bar => { %{ $x->{foo}->{bar} }, baz => $x->{foo}->{bar}->{baz} + 1 }}};
+
+my $x2 = Zip->new(node=>$x1)
             ->traverse('foo')
             ->traverse('bar')
             ->traverse('baz')
             ->change_with (sub { (shift) * 10 })
             ->change_with_(sub { $_++ })
             ->unzip;
-warn Dumper($y); # ... { baz => 11 }
+
+sub dive (&) {
+    my $sub = shift;
+    return sub {
+        local $Zip::Node = Zip->new(node => shift);
+        $sub->();
+        return $Zip::Node->unzip;
+        };
+}
+sub go {
+    $Zip::Node = $Zip::Node->traverse($_) for @_;
+}
+sub set {
+    $Zip::Node = $Zip::Node->set(shift);
+}
+sub change (&) {
+    $Zip::Node = $Zip::Node->change_with(shift);
+}
+sub change_ (&) {
+    $Zip::Node = $Zip::Node->change_with_(shift);
+}
+
+my $x3 = $x2->${ \dive { go qw/foo bar baz/; change { (shift)+100 }}};
+
+my $x4 = $x3->${ \dive { go qw/foo bar baz/; set "Hello"; }};
+
+warn Dumper($x, $x1, $x2, $x3, $x4);
