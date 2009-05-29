@@ -22,22 +22,18 @@ class Foo {
 
     has 'foo' => (
         accessor => _immutable('foo'),
-        traits => ['Clone'],
       );
     has 'bar' => (
         accessor => _immutable('bar'),
-        traits => ['Clone'],
       );
     has 'baz' => (
         accessor => _immutable('baz'),
-        traits => ['Clone'],
       );
 }
 
 use Data::Dumper;
 
 my $x = Foo->new( foo=> 'foo', bar => 'bar', baz => 'baz' );
-warn Dumper($x);
-my $y = Foo->foo('newfoo');
+my $y = $x->foo('newfoo');
 
 warn Dumper($x, $y);
