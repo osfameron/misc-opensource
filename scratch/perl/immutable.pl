@@ -4,10 +4,11 @@ use MooseX::Declare;
 
 class Foo {
     with 'MooseX::Clone';
+    use Scalar::Defer;
 
     sub _immutable {
         my $field = shift;
-        my $attr = __PACKAGE__->meta->find_attribute_by_name($field);
+        my $attr = lazy { __PACKAGE__->meta->find_attribute_by_name($field) };
         my $meth = sub {
             my $self = shift;
             if (@_) {
@@ -37,3 +38,5 @@ my $x = Foo->new( foo=> 'foo', bar => 'bar', baz => 'baz' );
 my $y = $x->foo('newfoo');
 
 warn Dumper($x, $y);
+
+warn Dumper( $x->foo, $y->foo );
