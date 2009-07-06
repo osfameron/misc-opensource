@@ -2,23 +2,33 @@ package MooseX::LazyValue::Trait;
 use Moose::Role;
 use Carp qw(confess);
 
+around _process_options => sub {
+    my ($original, $class, $name, $options) = @_;
+    $options->{lazy}     = 1;
+    $options->{default}  = sub { my $alt = "_${name}";  $_[0]->$alt->() };
+    $original->($class, $name, $options);
+};
+
 around initialize_instance_slot => sub {
     my $original = shift;
     my ($self, $meta_instance, $instance, $params) = @_;
 
     my $init_arg = $self->init_arg(); # from %params
     if ( defined($init_arg) and exists $params->{$init_arg}) {
-        my $val = $params->{$init_arg};
-        $self->default($instance, $val);
-        $self->meta->find_attribute_by_name('lazy')->set_value($instance, 1);
-        use Data::Dumper;
-        local $Data::Dumper::Indent =1; local $Data::Dumper::Maxdepth = 2;
-        warn Dumper($self->meta->find_attribute_by_name('lazy'), $instance);
-        warn "RARR, $init_arg ($val) (" . $self->is_lazy . ") (" . $self->default . ")";
+
+        my $alt_attr_name = "_${init_arg}";
+        $self->meta->find_attribute_by_name('init_arg')->set_value($self, undef);
+
+        my $alt_attr = $instance->meta->add_attribute($alt_attr_name, 
+            is       => 'ro',
+            isa      => 'CodeRef',
+            init_arg => $init_arg,
+            );
+        $original->($alt_attr, $meta_instance, $instance, $params);
         return;
     }
-    # fallback
-    $original->(@_);
+    # now do whatever original does
+    $original->($self, $meta_instance, $instance, $params);
 };
 
 no Moose::Role;
