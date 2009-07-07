@@ -17,14 +17,15 @@ around initialize_instance_slot => sub {
     if ( defined($init_arg) and exists $params->{$init_arg}) {
 
         my $alt_attr_name = "_${init_arg}";
-        $self->meta->find_attribute_by_name('init_arg')->set_value($self, undef);
 
         my $alt_attr = $instance->meta->add_attribute($alt_attr_name, 
             is       => 'ro',
             isa      => 'CodeRef',
             init_arg => $init_arg,
             );
+        # just process the _alt slot
         $original->($alt_attr, $meta_instance, $instance, $params);
+        # the actual slot is lazy, and doesn't need to be initialized yet!
         return;
     }
     # now do whatever original does

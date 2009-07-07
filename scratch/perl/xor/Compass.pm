@@ -12,22 +12,7 @@ has directions => (
     metaclass => 'LazyValue',
     is        => 'ro',
     isa       => ArrayRef['Compass::Direction'],
-    # lazy_build => 1,
     );
-
-=for RARR
-sub _build_directions { $_[0]->{_orig_args}{_directions}->() }
-sub BUILDARGS {
-    my ($class, %args) = @_;
-    $args{_directions} = delete $args{directions};
-    return $class->SUPER::BUILDARGS(%args);
-}
-sub BUILD {
-    my ($self, $hashref) = @_;
-    $self->{_orig_args} = $hashref;
-}
-
-=cut
 
 package Compass::Direction;
 use Moose;
@@ -43,22 +28,7 @@ has opposite => (
     metaclass => 'LazyValue',
     is        => 'ro',
     isa       => __PACKAGE__,
-    # lazy_build => 1,
     );
-
-=for RARR
-sub _build_opposite { $_[0]->{_orig_args}{_opposite}->() }
-sub BUILDARGS {
-    my ($class, %args) = @_;
-    $args{_opposite} = delete $args{opposite};
-    return $class->SUPER::BUILDARGS(%args);
-}
-sub BUILD {
-    my ($self, $hashref) = @_;
-    $self->{_orig_args} = $hashref;
-}
-
-=cut
 
 =for LATER
 has clockwise90 => (
@@ -107,6 +77,8 @@ $east = Compass::Direction->new(
     ); 
 
 use Data::Dumper;
-warn Dumper($west, $west->opposite);
+warn $west->opposite;
+warn $west->name;
+warn Dumper($west, $west->opposite, $horizontal);
 
 1;
