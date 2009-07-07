@@ -30,17 +30,17 @@ has opposite => (
     isa       => __PACKAGE__,
     );
 
-=for LATER
 has clockwise90 => (
-    is  => 'ro',
-    isa => __PACKAGE__,
-    );
-has anticlockwise90 => (
-    is  => 'ro',
-    isa => __PACKAGE__,
+    metaclass => 'LazyValue',
+    is        => 'ro',
+    isa       => __PACKAGE__,
     );
 
-=cut
+has anticlockwise90 => (
+    metaclass => 'LazyValue',
+    is        => 'ro',
+    isa       => __PACKAGE__,
+    );
 
 has delta => (
     is  => 'ro',
@@ -56,29 +56,54 @@ package Compass;
 my ($horizontal, $vertical,        # axes
     $north, $south, $east, $west); # directions
 
-$horizontal = Compass::Axis->new(
-    name        => 'horizontal',
-    directions => sub { [$west, $east ] },
-    );
-$vertical = Compass::Axis->new(
-    name        => 'vertical',
-    directions => sub { [$north, $south] },
-    );
+BEGIN {
+    $horizontal = Compass::Axis->new(
+        name        => 'horizontal',
+        directions => sub { [$west, $east ] },
+        );
+    $vertical = Compass::Axis->new(
+        name        => 'vertical',
+        directions => sub { [$north, $south] },
+        );
 
-$west = Compass::Direction->new(
-    name     => 'west',
-    opposite => sub { $east },
-    delta    => [0,-1],
-    ); 
-$east = Compass::Direction->new(
-    name     => 'east',
-    opposite => sub { $west },
-    delta    => [0,1],
-    ); 
-
-use Data::Dumper;
-warn $west->opposite;
-warn $west->name;
-warn Dumper($west, $west->opposite, $horizontal);
+    $west = Compass::Direction->new(
+        name            => 'west',
+        delta           => [ 0, -1 ],
+        axis            => $horizontal,
+        opposite        => sub { $east },
+        clockwise90     => sub { $north },
+        anticlockwise90 => sub { $south },
+        );
+    $east = Compass::Direction->new(
+        name            => 'east',
+        delta           => [ 0, 1 ],
+        axis            => $horizontal,
+        opposite        => sub { $west },
+        clockwise90     => sub { $south },
+        anticlockwise90 => sub { $north },
+        );
+    $north = Compass::Direction->new(
+        name            => 'north',
+        delta           => [ -1, 0 ],
+        axis            => $vertical,
+        opposite        => sub { $south },
+        clockwise90     => sub { $east },
+        anticlockwise90 => sub { $west },
+        );
+    $south = Compass::Direction->new(
+        name            => 'south',
+        delta           => [ 1, 0 ],
+        axis            => $vertical,
+        opposite        => sub { $north },
+        clockwise90     => sub { $west },
+        anticlockwise90 => sub { $east },
+        );
+}
+use constant HORIZONTAL => $horizontal;
+use constant VERTICAL   => $vertical;
+use constant NORTH      => $north;
+use constant SOUTH      => $south;
+use constant EAST       => $east;
+use constant WEST       => $west;
 
 1;
