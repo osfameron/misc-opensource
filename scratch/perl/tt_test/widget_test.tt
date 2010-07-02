@@ -1,0 +1,6 @@
+[% WRAPPER wrap.tt %]
+    <h1> Hello!  This is a test of widgets </h1>
+
+    [% widgets.location_select() %]
+    [% widgets.location_select('field_name', 'location2') %]
+[% END %]

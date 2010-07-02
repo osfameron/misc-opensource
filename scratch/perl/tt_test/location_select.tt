@@ -1,0 +1,18 @@
+<select 
+    class="[% widget_name %]"
+    id="[% field_name %]"
+    name="[% field_name %]">
+    [% SET oneval = "${data.locations.size}" == 1 %]
+    [% SET noval = !"$value" && !"$oneval" %]
+    <option value="" 
+        [%- IF required %] disabled[% END -%]
+        [%- IF noval %] selected[% END %]>
+        Please choose a location
+    </option>
+    [% FOR item IN data.locations %]
+        <option value="[% item.id %]"
+            [%- IF "$oneval" || ("$value" == "${item.id}") %] selected[% END %]>
+            [% item.name %]
+        </option>
+    [% END %]
+</select>

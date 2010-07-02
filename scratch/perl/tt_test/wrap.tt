@@ -1,0 +1,21 @@
+<html>
+<head>
+    <script src="/js/jQuery.js"></script>
+    [% FOR script IN widgets.all_scripts %]
+    <script src="[% script %]"></script>
+    [%- END -%]
+
+    [% FOR style IN widgets.all_styles %]
+    <link rel="stylesheet" type="text/css" href="[% style %]">
+    [%- END %]
+
+    $(function () { // onLoad
+    [% FOR inline_script IN widgets.all_inline_scripts %]
+      [%- inline_script %]
+    [%- END -%]
+    });
+</head>
+<body>
+    [% content %]
+</body>
+</html>
