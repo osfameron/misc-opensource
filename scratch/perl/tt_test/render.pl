@@ -94,7 +94,6 @@ use feature 'say';
         $param{value} = $c->stash->{$param{field_name}};
 
         $param{template} ||= $param{widget_name} . '.tt';
-        warn "GOTS $param{template}";
 
         my $tt = $self->context->tt;
 
@@ -117,7 +116,6 @@ use feature 'say';
             $self->add_inline_script($script);
         }
 
-        warn "NOW $param{template}";
         my $widget;
         $tt->process( 
             $param{template},
