@@ -11,8 +11,41 @@ use Data::Dumper;
 my @adj = (
     [ foo => 'bar', 'baz' ],
     [ bar => 'baz' ],
-    [ baz => 'foo' ],
+    [ baz => 'foo', 'qux' ],
 );
+
+my %hash; # have to predeclare
+%hash = map {
+    my ($k, @v) = @$_;
+    ($k => {
+        name => $k,
+        links => [
+            map {
+                my $i = $_; lazy { $hash{$i} ||= { name => $i, links => [] } }
+            } @v
+            ],
+    })
+} @adj;
+
+use Test::More 'no_plan';
+my $foo = $hash{foo};
+is $foo->{name}, 'foo';
+
+my $bar = $foo->{links}[0];
+is $bar->{name}, 'bar';
+
+my $baz = $bar->{links}[0];
+is $baz->{name}, 'baz';
+
+my $foo2 = $baz->{links}[0];
+is $foo2->{name}, 'foo';
+
+my $qux = $baz->{links}[1];
+is $qux->{name}, 'qux';
+is @{ $qux->{links} }, 0;
+
+__END__
+
 my $adj = list_to_stream( @adj );
 
 sub get_pos {
@@ -58,7 +91,6 @@ map_with_state(
             }
         } @$list;
 
-        use Test::More 'no_plan';
         my $foo = $adj3[0];
         is $foo->{name}, 'foo';
 
