@@ -4,7 +4,7 @@ use Scalar::Lazy;
 use feature 'say';
 use Data::Dumper;
 
-# using the lazy "cyclic" programming technique from 
+# using (a variant of, probably) the lazy "cyclic" programming technique from 
 # http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.47.5723
 # to turn an adjacency list into a graph, purely functionally
 
@@ -12,23 +12,36 @@ my @adj = (
     [ foo => 'bar', 'baz' ],
     [ bar => 'baz' ],
     [ baz => 'foo', 'qux' ],
+    [ quux => 'qux', 'foo' ],
+    [ quuux => 'quux' ],
 );
 
-my %hash; # have to predeclare
-%hash = map {
-    my ($k, @v) = @$_;
-    ($k => {
-        name => $k,
-        links => [
-            map {
-                my $i = $_; lazy { $hash{$i} ||= { name => $i, links => [] } }
-            } @v
-            ],
-    })
-} @adj;
+sub make_graph {
+    my %hash; # have to predeclare
+    %hash = map {
+        my ($k, @v) = @$_;
+        ($k => bless {
+            name => $k,
+            links => [
+                map {
+                    my $i = $_; lazy { $hash{$i} ||= { name => $i, links => [] } }
+                } @v
+                ],
+        }, 'Node')
+    } @_;
+    return bless \%hash, 'GraphFun';
+}
+
+sub GraphFun::DESTROY {
+    my $self = shift;
+    for (values %$self) {
+        delete $_->{links};
+    }
+}
+my $hash = make_graph(@adj);
 
 use Test::More 'no_plan';
-my $foo = $hash{foo};
+my $foo = $hash->{foo};
 is $foo->{name}, 'foo';
 
 my $bar = $foo->{links}[0];
@@ -43,6 +56,27 @@ is $foo2->{name}, 'foo';
 my $qux = $baz->{links}[1];
 is $qux->{name}, 'qux';
 is @{ $qux->{links} }, 0;
+
+use Benchmark ':all';
+use Graph;
+
+cmpthese( -1, {
+    graph => sub {
+        my $graph = make_graph(@adj);
+        undef $graph;
+    },
+    fun => sub {
+        my $graph = Graph->new;
+        for my $item (@adj) {
+            my ($k, @v) = @$item;
+            for my $v (@v) {
+                $graph->add_edge($k,$v);
+            }
+        }
+        undef $graph;
+
+    }
+});
 
 __END__
 
