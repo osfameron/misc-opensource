@@ -7,7 +7,9 @@ use Template;
 sub lazy {
     my ($var, $exp, $my) = @_ ;
     $my = $my ? 'my' : '';
-    return "$my $var = lazy { $exp };";
+    return $var ?
+        "$my $var = lazy { $exp };"
+      : "lazy { $exp }";
 }
 
 my @data = (
@@ -15,11 +17,13 @@ my @data = (
     {
         module => 'Scalar::Lazy',
         lazy   => \&lazy,
+        anon   => 1,
     },
 
     {
         module => 'Data::Thunk',
         lazy   => \&lazy,
+        anon   => 1,
     },
 
     {
@@ -31,12 +35,20 @@ my @data = (
                 "lazy $my $var = { $exp };" 
             },
     },
+
+    {
+        module => 'Scalar::Defer',
+        lazy   => \&lazy,
+        anon   => 1,
+    },
 );
 
 my $tt = Template->new;
+my $count = 0;
+
 for my $module (@data) {
     ( my $name = lc $module->{module} ) =~ s/::/-/g;
     $module->{name} = $name;
 
-    $tt->process( 'lazy.tt', $module, "t/$name.t" );
+    $tt->process( 'lazy.tt', $module, (sprintf 't/%02d-%s.t', $count++, $name ));
 }

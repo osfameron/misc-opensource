@@ -7,7 +7,7 @@ my $done_testing;
 use Test::Exception;
 
 diag "Testing [% module %]";
-{
+CALCULATE: {
     my $x;
     lives_ok {
         [% lazy('$x', '1/0') %]
@@ -16,7 +16,7 @@ diag "Testing [% module %]";
         $x + 0;
     } 'calculation forced die';
 }
-{
+ASSIGN: {
     my $x;
     lives_ok {
         [% lazy('$x', '1/0') %]
@@ -24,6 +24,38 @@ diag "Testing [% module %]";
     lives_ok {
         my $y = $x;
     } "assignment doesn't force"
+}
+sub Foo::foo { 'RETVAL' }
+METHOD: {
+    [% lazy('$x', 'bless {}, "Foo"', 1) %]
+    lives_ok {
+        is ($x->foo, 'RETVAL', 'Return value of method call OK');
+    } "method call lives";
+}
+[% IF anon %]
+ANON: {
+    sub List::tail {
+        my $list = shift;
+        return $list->[1];
+    }
+    my $arr = bless [ 1, [% lazy('', 'bless {}, "Foo"') %] ], 'List';
+    lives_ok {
+        is ($arr->tail->foo, 'RETVAL', 'Return value of anon method call OK');
+    } "method call lives";
+}
+[% END %]
+RECURSE: {
+    sub list {
+        my ($head, @tail) = @_
+            or return;
+        [% lazy('$tail', 'list(@tail)', 1) %];
+        return [$head, $tail];
+    }
+
+    require Test::NoWarnings;
+    my $x = list(10_000);
+
+    Test::NoWarnings::had_no_warnings();
 }
 
 $done_testing++;
