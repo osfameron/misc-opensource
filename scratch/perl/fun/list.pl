@@ -83,7 +83,9 @@ use strict; use warnings;
 package main;
 use Data::Dumper;
 use feature 'say';
-use Variable::Lazy;
+# use Variable::Lazy;
+use Data::Thunk; # gives me Can't locate object method "to_string" via package "Data::Thunk::ScalarValue" at list.pl line 13.
+# use Scalar::Defer; # too fucking slow
 
 sub node ($$) {
     return bless \@_, 'List::List';
@@ -91,8 +93,8 @@ sub node ($$) {
 sub list {
     my ($head, @tail) = @_
         or return;
-    lazy my $tail = { list(@tail) };   # Variable::Lazy
-    # my $tail = lazy { list(@tail) }; # Scalar::Lazy, and the others.  Caveats
+    # lazy my $tail = { list(@tail) };   # Variable::Lazy
+    my $tail = lazy { list(@tail) }; # Scalar::Lazy, and the others.  Caveats
     # my $tail = list(@tail);          # none (blows stack)
     return node $head, $tail;
 }
