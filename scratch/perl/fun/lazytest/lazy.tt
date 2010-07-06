@@ -44,17 +44,46 @@ ANON: {
     } "method call lives";
 }
 [% END %]
-RECURSE: {
+
+DESTROY: {
+    sub node {
+        return bless \@_, 'DestroyList';
+    }
     sub list {
         my ($head, @tail) = @_
             or return;
         [% lazy('$tail', 'list(@tail)', 1) %];
-        return [$head, $tail];
+        # note that we can't do return [$head, $tail] in V::L as it will force
+        return node($head, $tail);
+    }
+    my $DestroyCount = 0;
+    use List::Util 'max';
+    sub DestroyList::DESTROY {
+        my $self = shift;
+        $DestroyCount = max($DestroyCount, $self->[0]);
+        die if $self->[0] > 5; # shouldn't get called
+    }
+    END { 
+        ok $DestroyCount <= 5, "DestroyCount OK";
+        diag "DestroyCount = $DestroyCount";
+    }
+    my $y = list2(1..10);
+    my $item = $y->[1][1][1][1]; # force first 5 elements
+}
+
+RECURSE: {
+    sub node2 {
+        return \@_;
+    }
+    sub list2 {
+        my ($head, @tail) = @_
+            or return;
+        [% lazy('$tail', 'list(@tail)', 1) %];
+        return node2($head, $tail);
     }
 
     require Test::NoWarnings;
-    my $x = list(10_000);
-
+    my $x = list(1..5_000);
     Test::NoWarnings::had_no_warnings();
 }
 
