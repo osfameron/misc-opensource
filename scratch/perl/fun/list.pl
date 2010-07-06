@@ -3,6 +3,10 @@ use strict; use warnings;
 {
     package List;
     use Sub::Call::Tail;
+    sub new {
+        my $class = shift;
+        return bless \@_, $class;
+    }
 
     sub to_string {
         my ($list, $acc) = @_;
@@ -84,17 +88,21 @@ package main;
 use Data::Dumper;
 use feature 'say';
 # use Variable::Lazy;
-use Data::Thunk; # gives me Can't locate object method "to_string" via package "Data::Thunk::ScalarValue" at list.pl line 13.
-# use Scalar::Defer; # too fucking slow
+use lib '/home/hakim/other_repos/data-thunk/lib/';
+use Data::Thunk;
+# use Scalar::Defer; # too fucking slow, deep recursion in global destruction
+# use Scalar::Lazy; # doesn't defer to methods
 
 sub node ($$) {
-    return bless \@_, 'List::List';
+    # return bless \@_, 'List::List';
+    return lazy_new 'List::List', args => \@_; # Data::Thunk
 }
 sub list {
     my ($head, @tail) = @_
         or return;
     # lazy my $tail = { list(@tail) };   # Variable::Lazy
-    my $tail = lazy { list(@tail) }; # Scalar::Lazy, and the others.  Caveats
+    # my $tail = lazy { list(@tail) }; # Scalar::Lazy, and the others.  Caveats
+    my $tail = lazy_object { list(@tail) } class=>'List::List'; # Data::Thunk
     # my $tail = list(@tail);          # none (blows stack)
     return node $head, $tail;
 }
@@ -102,7 +110,7 @@ sub array {
     return bless [\@_, 0], 'List::Array';
 }
 
-my @list = (1..1000);
+my @list = (1..10_000);
 my $list  = list(@list);
 my $array = array(@list);
 say $list->to_string;
@@ -114,7 +122,7 @@ warn $array->nth(50);
 warn $list->nth(50);
 
 use Benchmark 'cmpthese';
-my $ITERATIONS = 5_000;
+my $ITERATIONS = -2; # run for 2 seconds
 cmpthese $ITERATIONS => { # 8333, 14286
     list_create  => sub { my $list  = list(@list);  },
     array_create => sub { my $array = array(@list); },
