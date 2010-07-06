@@ -1,8 +1,10 @@
 #!/usr/bin/perl
 use strict; use warnings;
+use lib '/home/hakim/other_repos/data-thunk/lib/';
 {
     package List;
     use Sub::Call::Tail;
+    use Data::Thunk;
     sub new {
         my $class = shift;
         return bless \@_, $class;
@@ -16,21 +18,17 @@ use strict; use warnings;
         return "${acc}${head}" unless $tail;
         tail $tail->to_string( "${acc}${head}," );
     }
-    sub to_string_it {
-        my $list = shift;
 
-        # fake tail recursion with iteration
-        my $acc = '';
-        {
-            $acc .= $list->head;
-            if (my $tail = $list->tail) {
-                $acc .= ',';
-                $list = $tail;
-                redo
-            }
+    sub drop {
+        my ($x, $list) = @_;
+        if ($x ==0) {
+            return $list;
         }
-        return $acc;
+        else {
+            return drop($x-1, $list->tail);
+        }
     }
+
     sub nth {
         my ($list, $n) = @_;
         if ($n) {
@@ -40,10 +38,28 @@ use strict; use warnings;
             return $list->head;
         }
     }
+    sub init {
+        my $list = shift;
+        if (my $tail = $list->tail) {
+            return List::List::node(
+                $list->head, lazy { $tail->init }
+                );
+        }
+        else {
+            return;
+        }
+    }
 }
 {
     package List::List;
     our @ISA = 'List';
+    use Data::Thunk;
+
+    sub node ($$) {
+        # return bless \@_, 'List::List';
+        return lazy_new 'List::List', args => \@_; # Data::Thunk
+    }
+
     sub head {
         my $list = shift or return;
         return $list->[0];
@@ -60,12 +76,30 @@ use strict; use warnings;
         my $self = shift;
         return $self->[0]->[ $self->[1] || 0 ];
     }
-    sub tail {
+    sub maxbound {
         my $self = shift;
         my $array = $self->[0];
-        my $offset = ($self->[1] || 0) + 1;
-        if ($offset <= $#$array) {
-            return bless [ $array, $offset ], 'List::Array';
+        return $self->[2] || $#$array;
+    }
+    sub tail {
+        my $self = shift;
+        my $array    = $self->[0];
+        my $offset   = ($self->[1] || 0) + 1;
+        my $maxbound = $self->maxbound;
+        if ($offset <= $maxbound) {
+            return bless [ $array, $offset, $maxbound ], 'List::Array';
+        }
+        else {
+            return;
+        }
+    }
+    sub init {
+        my $self = shift;
+        my $array    = $self->[0];
+        my $offset   = ($self->[1] || 0);
+        my $maxbound = $self->maxbound;
+        if ($maxbound > $offset) {
+            return bless [ $array, $offset, $maxbound-1 ], 'List::Array';
         }
         else {
             return;
@@ -74,12 +108,15 @@ use strict; use warnings;
     sub nth {
         my ($self, $n) = @_;
         my ($list, $offset) = @$self;
+        my $maxbound = $self->maxbound;
+        die if $offset+$n > $maxbound;
         return $list->[$offset + $n];
     }
     sub to_string {
         my $self = shift;
         my ($list, $offset) = @$self;
-        my @list = @$list[$offset..$#$list];
+        my $maxbound = $self->maxbound;
+        my @list = @$list[$offset..$maxbound];
         return join ',' => @list;
     }
 }
@@ -88,7 +125,6 @@ package main;
 use Data::Dumper;
 use feature 'say';
 # use Variable::Lazy;
-use lib '/home/hakim/other_repos/data-thunk/lib/';
 use Data::Thunk;
 # use Scalar::Defer; # too fucking slow, deep recursion in global destruction
 # use Scalar::Lazy; # doesn't defer to methods
@@ -109,6 +145,13 @@ sub list {
 sub array {
     return bless [\@_, 0], 'List::Array';
 }
+
+my $test = list(1..10);
+say $test->to_string;
+say $test->init->to_string;
+my $test2 = array(1..10);
+say $test2->to_string;
+say $test2->init->to_string;
 
 my @list = (1..10_000);
 my $list  = list(@list);
