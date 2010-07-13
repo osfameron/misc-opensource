@@ -1,24 +1,39 @@
-package List::Map;
+package List::Grep;
 use KiokuDB::Class;
 
 extends 'List::Node';
 
 has 'list' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'List',
 );
 
+sub _list {
+    my $self = shift;
+    my $list = $self->list;
+
+    my $reset_list;
+    {
+        last if $list->isEmpty;
+        last if $self->filter( $list->head );
+        $reset_list++;
+        $list = $list->tail;
+        redo;
+    }
+    $self->list($list) if $reset_list; # optimization: modify inplace
+    return $list;
+}
+
 sub isEmpty {
     my $self = shift;
-    return $self->list->isEmpty;
+    return $self->_list->isEmpty;
 }
 
 has '+head' => (
     lazy => 1,
     default => sub { 
         my $self = shift;
-        my $val = $self->list->head;
-        $self->transform( $self->list->head ),
+        return $self->_list->head;
     },
 );
 
@@ -37,9 +52,9 @@ has '+tail' => (
     },
 );
 
-sub transform {
+sub filter {
     my ($self, $val) = @_;
-    return $val; # id
+    return 1; # id
 }
 
 1;

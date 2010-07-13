@@ -3,6 +3,7 @@
 use strict; use warnings;
 use List;
 use List::Map::Increment;
+use List::Grep::Odd;
 use Data::Dumper;
 
 use KiokuDB;
@@ -26,7 +27,10 @@ local $Data::Dumper::Maxdepth = 10;
     my $map2 = $kioku->lookup('map');
 
     warn Dumper($map2);
+
     warn Dumper( [ $map2->take(3) ] );
-    warn Dumper( [ $map2->While(sub { $_[0] < 8 })->take(10) ] );
-    warn Dumper($map2);
+    warn Dumper( [ $map2->While(sub { $_[0] < 5 })->take(10) ] );
+
+    my $grep = List::Grep::Odd->new( list => $map2 );
+    warn Dumper( [ $grep->take(10) ] );
 }
