@@ -36,16 +36,22 @@ has from_root_up_to => (
     isa => 'Maybe[Event]',
 );
 
-sub add_event {
-    my ($self, $event) = @_;
-    $self->list( $self->list->prepend($event) );
-}
+sub create {
+    my ($class, $kioku, %params) = @_;
 
-sub store {
-    my ($self, $kioku) = @_;
+    my $self = $class->new(%params);
 
     my $store_as = $self->store_as or return;
     $kioku->store( $store_as, $self );
+
+    $self->update($kioku);
+    return $self;
+}
+
+
+sub add_event {
+    my ($self, $event) = @_;
+    $self->list( $self->list->prepend($event) );
 }
 
 sub up_to_date {
@@ -78,6 +84,8 @@ sub update {
     $self->list($whole_list);
     $self->from_feed_up_to( $from->list->head );
     $self->from_root_up_to( $root->list->head );
+
+    $kioku->store($self) if $self->store_as;
 }
 
 1;

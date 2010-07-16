@@ -50,12 +50,15 @@ use KiokuDB;
     my $kioku = KiokuDB->connect('hash');
     my $scope = $kioku->new_scope;
 
-    my $list = make_event_list()->Take(20); 
+    my $list = make_event_list()->Take(40); 
 
-    my $root_list = Feed->new( list => $list, store_as => 'root' );
-    $root_list->store($kioku);
+    my $root_list = Feed->create( 
+        $kioku,
+        list => $list, 
+        store_as => 'root' );
 
-    my $completions = Feed->new(
+    my $completions = Feed->create(
+        $kioku,
         store_as => 'completions',
         from_feed => 'root',
         make_list => sub {
@@ -63,10 +66,9 @@ use KiokuDB;
             $root->Grep( sub { $_[0]->action eq 'completed' } );
         },
     );
-    $completions->update($kioku);
-    $completions->store($kioku);
 
-    my $high_score = Feed->new(
+    my $high_score = Feed->create(
+        $kioku,
         store_as => 'high_score',
         from_feed => 'completions',
         make_list => sub {
@@ -74,8 +76,6 @@ use KiokuDB;
             $completions->Grep( sub { $_[0]->object >= 80 } );
         }
     );
-    $high_score->update($kioku);
-    $high_score->store($kioku);
 
     my $h2 = $kioku->lookup( 'high_score' );
     warn Dumper( [ $h2->list->take(2) ] );
@@ -85,7 +85,8 @@ use KiokuDB;
     for (1..10) {
         $root_list->add_event( make_event() );
     }
+    $h2->update($kioku);
 
-    $high_score->update($kioku);
-    warn Dumper( [ $h2->list->take(5) ] ); # may be different from above
+    my $h3 = $kioku->lookup( 'high_score' );
+    warn Dumper( [ $h3->list->take(5) ] ); # may be different from above
 }
