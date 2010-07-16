@@ -31,4 +31,9 @@ local $Data::Dumper::Maxdepth = 10;
 
     my $grep = $map->Grep( sub { $_[0] % 2 });
     warn Dumper( [ $grep->take(10) ] );
+
+    warn $grep->Foldl( sub { $_[0] + $_[1] }, 0 );
+    warn $grep->Foldr( sub { $_[0] + $_[1] }, 0 );
+
+    warn Dumper( [ $grep->concat($map2)->take(20) ] );
 }

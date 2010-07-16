@@ -4,6 +4,11 @@ use KiokuDB::Class;
 my $empty;
 sub empty { return $empty ||= List::Empty->new }
 
+sub prepend {
+    my ($self, $head) = @_;
+    return List->node($head, $self);
+}
+
 sub node {
     my $class = shift;
     return $class->empty unless @_;
@@ -71,7 +76,23 @@ sub Grep {
             }) 
         : $self->tail->Grep($f);
 }
+sub Foldl {
+    my ($self, $f, $init) = @_;
+    return $self->tail->Foldl( $f, $f->( $init, $self->head ) );
+}
+sub Foldr {
+    # f x (foldr f z xs)
+    my ($self, $f, $init) = @_;
+    return $f->(
+        $self->head,
+        $self->tail->Foldr( $f, $init )
+        );
+}
 
+sub concat {
+    my ($self, $list) = @_;
+    return $self->Foldr( sub { $_[1]->prepend($_[0]) }, $list );
+}
 
 sub tail {
     my $self = shift;
@@ -115,5 +136,13 @@ sub take  { return () }
 sub Map   { return shift }
 sub Grep  { return shift }
 sub While { return __PACKAGE__->empty }
+sub Foldl {
+    my ($self, $f, $init) = @_;
+    return $init;
+}
+sub Foldr {
+    my ($self, $f, $init) = @_;
+    return $init;
+}
 
 1;
