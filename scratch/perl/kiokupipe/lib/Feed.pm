@@ -50,6 +50,7 @@ sub create {
 
 
 sub add_event {
+    # only valid for root
     my ($self, $event) = @_;
     $self->list( $self->list->prepend($event) );
 }
@@ -65,27 +66,30 @@ sub up_to_date {
 
 sub update {
     my ($self, $kioku, $root) = @_;
-    $root ||= $kioku->lookup('root');
 
-    return if $self->up_to_date( $kioku, $root );
+    $kioku->txn_do( sub {
+        $root ||= $kioku->lookup('root');
 
-    my $from = $kioku->lookup( $self->from_feed );
-    $from->update($kioku, $root);
+        return if $self->up_to_date( $kioku, $root );
 
-    my $from_feed_up_to = $self->from_feed_up_to;
-    my $new = $from_feed_up_to ?
-        $from->list->While( sub { refaddr $_[0] != refaddr $from_feed_up_to })
-        : $from->list;
+        my $from = $kioku->lookup( $self->from_feed );
+        $from->update($kioku, $root);
 
-    my $new_list = $self->make_list->( $new );
+        my $from_feed_up_to = $self->from_feed_up_to;
+        my $new = $from_feed_up_to ?
+            $from->list->While( sub { refaddr $_[0] != refaddr $from_feed_up_to })
+            : $from->list;
 
-    my $whole_list = $new_list->concat($self->list);
+        my $new_list = $self->make_list->( $new );
 
-    $self->list($whole_list);
-    $self->from_feed_up_to( $from->list->head );
-    $self->from_root_up_to( $root->list->head );
+        my $whole_list = $new_list->concat($self->list);
 
-    $kioku->store($self) if $self->store_as;
+        $self->list($whole_list);
+        $self->from_feed_up_to( $from->list->head );
+        $self->from_root_up_to( $root->list->head );
+
+        $kioku->store($self) if $self->store_as;
+    });
 }
 
 1;

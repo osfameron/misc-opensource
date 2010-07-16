@@ -13,6 +13,7 @@ use User;
 use Module;
 use DateTime;
 
+# Deps: KiokuDB, SQL::Translator (for deploy)
 use KiokuDB;
 
 {
@@ -47,37 +48,45 @@ use KiokuDB;
 }
 
 {
-    my $kioku = KiokuDB->connect('hash');
+
+    my $create = shift @ARGV;
+
+    my $kioku = KiokuDB->connect("dbi:mysql:dbname=kioku;user=root;password=password", 
+        create => $create);
+
     my $scope = $kioku->new_scope;
 
-    my $list = make_event_list()->Take(40); 
+    if ($create) {
+        my $list = make_event_list()->Take(40); 
 
-    my $root_list = Feed->create( 
-        $kioku,
-        list => $list, 
-        store_as => 'root' );
+        my $root_list = Feed->create( 
+            $kioku,
+            list => $list, 
+            store_as => 'root' );
 
-    my $completions = Feed->create(
-        $kioku,
-        store_as => 'completions',
-        from_feed => 'root',
-        make_list => sub {
-            my $root = shift;
-            $root->Grep( sub { $_[0]->action eq 'completed' } );
-        },
-    );
+        my $completions = Feed->create(
+            $kioku,
+            store_as => 'completions',
+            from_feed => 'root',
+            make_list => sub {
+                my $root = shift;
+                $root->Grep( sub { $_[0]->action eq 'completed' } );
+            },
+        );
 
-    my $high_score = Feed->create(
-        $kioku,
-        store_as => 'high_score',
-        from_feed => 'completions',
-        make_list => sub {
-            my $completions = shift;
-            $completions->Grep( sub { $_[0]->object >= 80 } );
-        }
-    );
+        my $high_score = Feed->create(
+            $kioku,
+            store_as => 'high_score',
+            from_feed => 'completions',
+            make_list => sub {
+                my $completions = shift;
+                $completions->Grep( sub { $_[0]->object >= 80 } );
+            }
+        );
+    }
 
-    my $h2 = $kioku->lookup( 'high_score' );
+    my $root_list = $kioku->lookup( 'root' );
+    my $h2        = $kioku->lookup( 'high_score' );
     warn Dumper( [ $h2->list->take(2) ] );
 
     # now, let's add some more events
