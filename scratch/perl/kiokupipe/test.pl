@@ -2,14 +2,12 @@
 
 use strict; use warnings;
 use List;
-use List::Map::Increment;
-use List::Grep::Odd;
 use Data::Dumper;
 
 use KiokuDB;
 
 my $list = List->from_array(1..10);
-my $map = List::Map::Increment->new( list => $list );
+my $map  = $list->Map( sub { $_[0] + 1 });
 
 local $Data::Dumper::Indent = 1;
 local $Data::Dumper::Maxdepth = 10;
@@ -29,8 +27,8 @@ local $Data::Dumper::Maxdepth = 10;
     warn Dumper($map2);
 
     warn Dumper( [ $map2->take(3) ] );
-    warn Dumper( [ $map2->While(sub { $_[0] < 5 })->take(10) ] );
+    warn Dumper( [ $map2->While(sub { $_[0] < 6 })->take(10) ] );
 
-    my $grep = List::Grep::Odd->new( list => $map2 );
+    my $grep = $map->Grep( sub { $_[0] % 2 });
     warn Dumper( [ $grep->take(10) ] );
 }

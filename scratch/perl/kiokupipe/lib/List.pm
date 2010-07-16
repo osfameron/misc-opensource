@@ -4,16 +4,24 @@ use KiokuDB::Class;
 my $empty;
 sub empty { return $empty ||= List::Empty->new }
 
+sub node {
+    my $class = shift;
+    return $class->empty unless @_;
+    my ($head, $tail) = @_;
+    $tail ||= $class->empty;
+
+    return List::Node->new({
+        head  => $head,
+        _tail => $tail,
+        });
+}
+
 sub from_array {
     my $self = shift;
     my $class = (ref $self) || $self;
     if (@_) {
         my $head = shift;
-        my $list = List::Node->new({
-            head => $head,
-            tail => scalar $class->from_array(@_),
-        });
-        return $list;
+        return List->node( $head, scalar $class->from_array(@_));
     }
     else {
         return $class->empty;
@@ -35,25 +43,60 @@ has 'head' => (
     isa => 'Any',
 );
 
-has 'tail' => (
+has '_tail' => (
     traits  => ['KiokuDB::Lazy'],
-    is      => 'ro',
-    isa     => 'List',
+    is      => 'rw',
+    isa     => 'List | CodeRef',
 );
+
+sub Map {
+    my ($self, $f) = @_;
+
+    return List->node(
+        $f->($self->head),
+        sub {
+            $self->tail->Map($f)
+        });
+}
+sub Grep {
+    my ($self, $f) = @_;
+
+    my $head = $self->head;
+
+    return $f->($head) ?
+        List->node(
+            $head, 
+            sub {
+                $self->tail->Grep($f)
+            }) 
+        : $self->tail->Grep($f);
+}
+
+
+sub tail {
+    my $self = shift;
+    my $tail = $self->_tail;
+    if (ref $tail eq 'CODE') {
+        my $newtail = $tail->($self);
+        $self->_tail($newtail);
+        return $newtail;
+    }
+    else {
+        return $tail;
+    }
+}
 
 sub take {
     my ($list, $count) = @_;
-    return () if $list->isEmpty;
     return () unless $count;
     return ($list->head, $list->tail->take($count-1));
 }
 
 sub While {
     my ($list, $f) = @_;
-    return $list->empty if $list->isEmpty;
     my $head = $list->head;
     if ($f->($head)) {
-        return List::Node->new({ head => $head, tail => scalar $list->tail->While($f) });
+        return List->node( $head, scalar $list->tail->While($f));
     }
     else {
         return $list->empty;
@@ -69,6 +112,8 @@ sub isEmpty { 1 }
 sub head  { die "Empty lists have no head" }
 sub tail  { die "Empty lists have no tail" }
 sub take  { return () }
+sub Map   { return shift }
+sub Grep  { return shift }
 sub While { return __PACKAGE__->empty }
 
 1;
