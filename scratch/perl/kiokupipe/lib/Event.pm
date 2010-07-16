@@ -1,5 +1,5 @@
 package Event;
-use Moose;
+use KiokuDB::Class;
 use MooseX::Types::DateTime;
 
 has 'user' => (

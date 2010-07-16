@@ -42,7 +42,6 @@ use KiokuDB;
     }
 }
 
-
 {
     my $kioku = KiokuDB->connect('hash');
     my $scope = $kioku->new_scope;
@@ -53,6 +52,7 @@ use KiokuDB;
     $kioku->store(list => $list);
 
     my $completions = $kioku->lookup('list')->Grep( sub { $_[0]->action eq 'completed' } );
+
     my $high_score  = $completions->Grep( sub { $_[0]->object >= 80 } );
 
     $kioku->store(high_scores => $high_score);

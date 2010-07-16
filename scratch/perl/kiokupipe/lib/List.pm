@@ -116,6 +116,11 @@ sub take {
     return () unless $count;
     return ($list->head, $list->tail->take($count-1));
 }
+sub Take { # listy version
+    my ($list, $count) = @_;
+    return $list->empty unless $count;
+    return List->node($list->head, $list->tail->Take($count-1));
+}
 
 sub While {
     my ($list, $f) = @_;
@@ -137,9 +142,14 @@ sub isEmpty { 1 }
 sub head  { die "Empty lists have no head" }
 sub tail  { die "Empty lists have no tail" }
 sub take  { return () }
+sub Take  { return shift }
 sub Map   { return shift }
 sub Grep  { return shift }
 sub While { return __PACKAGE__->empty }
+sub concat {
+    my ($self, $list) = @_;
+    return $list;
+}
 sub Foldl {
     my ($self, $f, $init) = @_;
     return $init;
