@@ -88,6 +88,10 @@ sub Foldr {
         $self->tail->Foldr( $f, $init )
         );
 }
+sub cycle {
+    my ($self, $list) = @_;
+    return List->node ($self->head, sub { $self->tail->cycle($list || $self) });
+}
 
 sub concat {
     my ($self, $list) = @_;
@@ -143,6 +147,10 @@ sub Foldl {
 sub Foldr {
     my ($self, $f, $init) = @_;
     return $init;
+}
+sub cycle {
+    my ($self, $list) = @_;
+    return $list->cycle();
 }
 
 1;
