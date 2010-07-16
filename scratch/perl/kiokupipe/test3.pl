@@ -3,6 +3,7 @@
 use strict; use warnings;
 use List;
 use Data::Dumper;
+use PerlX::MethodCallWithBlock;
 local $Data::Dumper::Indent = 1;
 local $Data::Dumper::Maxdepth = 2;
 
@@ -70,7 +71,7 @@ use KiokuDB;
             from_feed => 'root',
             make_list => sub {
                 my $root = shift;
-                $root->Grep( sub { $_[0]->action eq 'completed' } );
+                $root->Grep { $_[0]->action eq 'completed' };
             },
         );
 
@@ -80,7 +81,7 @@ use KiokuDB;
             from_feed => 'completions',
             make_list => sub {
                 my $completions = shift;
-                $completions->Grep( sub { $_[0]->object >= 80 } );
+                $completions->Grep { $_[0]->object >= 80 } };
             }
         );
     }
