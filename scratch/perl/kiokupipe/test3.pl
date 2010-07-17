@@ -88,7 +88,8 @@ use KiokuDB;
 
     my $root_list = $kioku->lookup( 'root' );
     my $h2        = $kioku->lookup( 'high_score' );
-    warn Dumper( [ $h2->list->take(2) ] );
+    warn Dumper( [ $h2->list->Take(2)->to_array ] );
+    warn Dumper( $h2->list->Take(2) );
 
     # now, let's add some more events
 
@@ -98,5 +99,5 @@ use KiokuDB;
     $h2->update($kioku);
 
     my $h3 = $kioku->lookup( 'high_score' );
-    warn Dumper( [ $h3->list->take(5) ] ); # may be different from above
+    warn Dumper( [ $h3->list->Take(5)->to_array ] ); # may be different from above
 }

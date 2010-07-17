@@ -52,7 +52,7 @@ sub create {
 sub add_event {
     # only valid for root
     my ($self, $event) = @_;
-    $self->list( $self->list->prepend($event) );
+    $self->list( $self->list->Prepend($event) );
 }
 
 sub up_to_date {
@@ -82,7 +82,7 @@ sub update {
 
         my $new_list = $self->make_list->( $new );
 
-        my $whole_list = $new_list->concat($self->list);
+        my $whole_list = $new_list->Concat($self->list);
 
         $self->list($whole_list);
         $self->from_feed_up_to( $from->list->head );

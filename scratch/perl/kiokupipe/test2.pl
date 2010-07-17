@@ -59,5 +59,5 @@ use KiokuDB;
 
     my $h2 = $kioku->lookup( 'high_scores' );
 
-    warn Dumper( [ $h2->take(10) ] );
+    warn Dumper( [ $h2->Take(10)->to_array ] );
 }

@@ -26,15 +26,15 @@ local $Data::Dumper::Maxdepth = 10;
 
     warn Dumper($map2);
 
-    warn Dumper( [ $map2->take(3) ] );
-    warn Dumper( [ $map2->While(sub { $_[0] < 6 })->take(10) ] );
+    warn Dumper( [ $map2->Take(3)->to_array ] );
+    warn Dumper( [ $map2->While(sub { $_[0] < 6 })->Take(10)->to_array ] );
 
     my $grep = $map->Grep( sub { $_[0] % 2 });
-    warn Dumper( [ $grep->take(10) ] );
+    warn Dumper( [ $grep->Take(10)->to_array ] );
 
     warn $grep->Foldl( sub { $_[0] + $_[1] }, 0 );
     warn $grep->Foldr( sub { $_[0] + $_[1] }, 0 );
 
-    warn Dumper( [ $grep->concat($map2)->take(20) ] );
-    warn Dumper( [ $grep->cycle->take(20) ] );
+    warn Dumper( [ $grep->Concat($map2)->Take(20)->to_array ] );
+    warn Dumper( [ $grep->Cycle->Take(20)->to_array ] );
 }

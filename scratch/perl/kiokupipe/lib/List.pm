@@ -4,7 +4,7 @@ use KiokuDB::Class;
 my $empty;
 sub empty { return $empty ||= List::Empty->new }
 
-sub prepend {
+sub Prepend {
     my ($self, $head) = @_;
     return List->node($head, $self);
 }
@@ -88,14 +88,14 @@ sub Foldr {
         $self->tail->Foldr( $f, $init )
         );
 }
-sub cycle {
+sub Cycle {
     my ($self, $list) = @_;
-    return List->node ($self->head, sub { $self->tail->cycle($list || $self) });
+    return List->node ($self->head, sub { $self->tail->Cycle($list || $self) });
 }
 
-sub concat {
+sub Concat {
     my ($self, $list) = @_;
-    return $self->Foldr( sub { $_[1]->prepend($_[0]) }, $list );
+    return $self->Foldr( sub { $_[1]->Prepend($_[0]) }, $list );
 }
 
 sub tail {
@@ -111,12 +111,11 @@ sub tail {
     }
 }
 
-sub take {
-    my ($list, $count) = @_;
-    return () unless $count;
-    return ($list->head, $list->tail->take($count-1));
+sub to_array {
+    my ($list) = @_;
+    return ($list->head, $list->tail->to_array);
 }
-sub Take { # listy version
+sub Take {
     my ($list, $count) = @_;
     return $list->empty unless $count;
     return List->node($list->head, $list->tail->Take($count-1));
@@ -141,12 +140,12 @@ sub isEmpty { 1 }
 
 sub head  { die "Empty lists have no head" }
 sub tail  { die "Empty lists have no tail" }
-sub take  { return () }
+sub to_array { return () }
 sub Take  { return shift }
 sub Map   { return shift }
 sub Grep  { return shift }
 sub While { return __PACKAGE__->empty }
-sub concat {
+sub Concat {
     my ($self, $list) = @_;
     return $list;
 }
@@ -158,9 +157,9 @@ sub Foldr {
     my ($self, $f, $init) = @_;
     return $init;
 }
-sub cycle {
+sub Cycle {
     my ($self, $list) = @_;
-    return $list->cycle();
+    return $list->Cycle();
 }
 
 1;
