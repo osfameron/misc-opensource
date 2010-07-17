@@ -36,9 +36,6 @@ sub from_array {
 package List::Node;
 use KiokuDB::Class;
 
-use lib '/home/hakim/other_repos/data-thunk/';
-use Data::Thunk;
-
 extends 'List';
 
 sub isEmpty { 0 }
