@@ -32,13 +32,11 @@ parseExprOuter = ((try parseSong) <|> parseExprAux) <* eof
 
 parseExprAux   = (try parseList) <|> (try parseBird)  <|> (try parseBirdV)
 
-parseBirdV = do f <- lower 
-                r <- many (digit <|> oneOf "*^")
-                return $ BirdV (f:r)
-
-parseBird = do f <- upper 
-               r <- many (digit <|> oneOf "*^")
-               return $ Bird (f:r)
+parseBird  = parseBird' upper Bird
+parseBirdV = parseBird' lower BirdV
+parseBird' s c = do f <- s 
+                    r <- many (digit <|> oneOf "*^")
+                    return $ c (f:r)
 
 parseList = char '(' *> parseSong <* char ')'
 
