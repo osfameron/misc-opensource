@@ -52,6 +52,12 @@ sub from_string {
     }
     return $self;
 }
+sub from_file {
+    my ($class, $filename) = @_;
+    use File::Map 'map_file';
+    map_file my $map, $filename;
+    return $class->from_string($map);
+}
 
 sub piece_at_pos {
     my ($self, $pos) = @_;
