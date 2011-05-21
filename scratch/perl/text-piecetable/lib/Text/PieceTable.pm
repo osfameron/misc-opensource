@@ -3,9 +3,6 @@ use Text::PieceTable::Source;
 use Text::PieceTable::Piece;
 use List::Util 'sum';
 
-use Data::Dumper;
-local $Data::Dumper::Indent = 1;
-
 use Moose;
 
 has source => (
