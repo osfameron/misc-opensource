@@ -114,4 +114,4 @@ sub length {
     return sum $self->map_pieces( sub { $_->length } );
 }
 
-no Moose; 1;
+no Moose; __PACKAGE__->meta->make_immutable; 1;

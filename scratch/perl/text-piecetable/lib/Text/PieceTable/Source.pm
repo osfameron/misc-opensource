@@ -35,4 +35,4 @@ sub whole_piece {
     );
 }
 
-no Moose; 1;
+no Moose; __PACKAGE__->meta->make_immutable; 1;
