@@ -59,9 +59,16 @@ sub from_file {
 sub piece_at_pos {
     my ($self, $pos) = @_;
 
+    my @pieces = $self->all_pieces;
+
+    return _piece_at_pos( $pos, \@pieces);
+}
+sub _piece_at_pos {
+    my ($pos, $pieces) = @_;
+
     my $i = 0;
     my @before;
-    my @pieces = $self->all_pieces;
+    my @pieces = @$pieces;
 
     while (my $piece = shift @pieces) {
         my $len = $piece->length;
@@ -77,11 +84,41 @@ sub piece_at_pos {
     die "Invalid pos $pos";
 }
 
+sub replace {
+    my ($self, $pos, $length, $text) = @_;
+    return $self->delete($pos, $length)->insert($pos, $text);
+}
+
 sub insert {
     my ($self, $pos, $text) = @_;
 
     my $piece = $self->additional->append($text);
     return $self->insert_piece($pos, $piece);
+}
+sub delete {
+    my ($self, $pos, $len) = @_;
+
+    my ($piece, $i, $before, $after) =
+        $self->piece_at_pos($pos);
+
+    my ($pre,$post) = $piece->split_at($i);
+    my ($piece2, $j, undef, $after2) =
+        _piece_at_pos($len, [ $post, @$after ]);
+
+    my (undef, $post2) = $piece2->split_at($j);
+
+    my $pieces = [
+            @$before,
+            $pre ? $pre : (),
+            $post2 ? $post2 : (),
+            @$after2,
+        ];
+
+    return $self->new(
+        source     => $self->source,
+        additional => $self->additional,
+        pieces     => $pieces,
+    );
 }
 
 sub insert_piece {

@@ -17,4 +17,16 @@ is $pt->as_string, 'the quick fox jumps over the lazy dog';
 $pt = $pt->insert(10, 'brown ');
 is $pt->as_string, 'the quick brown fox jumps over the lazy dog';
 
+$pt = $pt->delete(34, 5);
+is $pt->as_string, 'the quick brown fox jumps over the dog';
+
+$pt = $pt->delete(0, 10);
+is $pt->as_string, 'brown fox jumps over the dog';
+
+$pt = $pt->replace( 6, 3, 'vixen' );
+is $pt->as_string, 'brown vixen jumps over the dog';
+
+$pt = $pt->delete(0, $pt->length);
+is $pt->as_string, '';
+
 done_testing;
