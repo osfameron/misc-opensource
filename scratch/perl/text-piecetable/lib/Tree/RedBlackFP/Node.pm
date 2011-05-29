@@ -112,7 +112,7 @@ sub member {
     my ($self, $data) = @_;
 
     my $cmp = $self->compare($data)
-        or return 1;
+        or return $self;
 
     return $cmp > 0 ?
         $self->right->member($data)
@@ -132,5 +132,29 @@ sub debug_tree {
 
     return $left . $padding . $data . $right;
 }
+sub leaves {
+    my $self = shift;
+    return (
+        $self->left->leaves,
+        $self->data,
+        $self->right->leaves
+    );
+}
+
+sub remove {
+    my ($self, $data) = @_;
+
+    my $cmp = $self->compare($data)
+        or do {
+            
+
+        };
+
+    return $cmp > 0 ?
+        $self->right->remove($data)
+      : $self->left ->remove($data);
+}
+
+use constant is_empty => 0;
 
 no Moose; __PACKAGE__->meta->make_immutable; 1;

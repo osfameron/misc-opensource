@@ -35,5 +35,8 @@ sub _insert {
 }
 
 sub debug_tree { '' }
+sub leaves { () }
+
+use constant is_empty => 1;
 
 no Moose; __PACKAGE__->meta->make_immutable; 1;
