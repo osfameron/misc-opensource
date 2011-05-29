@@ -44,7 +44,7 @@ sub node {
 }
 
 sub match {
-    my ($self, $match) = @_;
+    my ($self, $match, $sym) = @_;
 
     return $self if $match->isEmpty;
     my $p = $match->value;
@@ -54,15 +54,41 @@ sub match {
     else {
         return unless $self->value eq $p;
     }
+
+    my @dirs = qw/ left right /;
+    my %opposite = ( left=>'right', right=>'left' );
+
     my @children;
-    for my $dir ('left', 'right') {
+    for my $dir (@dirs) {
         my $child = $match->$dir;
         next if $child->isEmpty;
-        my @child = $self->$dir->match($child)
+
+        my $descend = $sym ? $opposite{$dir} : $dir;
+        my @child = $self->$descend->match($child, $sym)
             or return;
         push @children, @child;
     }
     return ($self, @children);
+}
+
+sub run_match {
+    my ($self, $tree, $f) = @_;
+    my @list = eval { $self->match($tree) };
+    if (@list) {
+        return $f->(@list);
+    }
+    return;
+}
+sub run_match_and_sym {
+    my ($self, $tree, $f) = @_;
+
+    for my $sym (0,1) {
+        my @list = eval { $self->match($tree, $sym) };
+        if (@list) {
+            return $f->(@list);
+        }
+    }
+    return;
 }
 
 sub default_comparison {
@@ -88,22 +114,23 @@ sub _insertWith { die "abstract method" };
 sub compareWith { die "abstract method" };
 sub member      { die "abstract method" };
 sub debug_tree  { die "abstract method" };
-sub leaves      { die "abstract method" };
+sub inorder      { die "abstract method" };
 sub show        { die "abstract method" };
-
-sub run_match {
-    my ($self, $tree, $debug) = @_;
-    my @list = eval { $self->match($tree) };
-    if ($debug) {
-        say sprintf "$debug %s: %s",
-            (@list ? 'OK' : 'FAIL'),
-            join ',' => map $_->show, @list;
-    }
+sub debug_inorder {
+    my $self = shift;
+    return join ',' => map $_->show, $self->inorder;
 }
 
 package Tree::BinaryFP::Empty;
 use Moose;
 extends 'Tree::BinaryFP';
+
+sub min { shift }
+sub max { shift }
+
+sub popMax { 
+    die "popMax called on empty list";
+}
 
 sub reverse {
     return shift;
@@ -115,9 +142,10 @@ sub _insertWith {
 sub member  { return }
 sub compare { return }
 sub debug_tree { '' }
-sub leaves { () }
+sub inorder { () }
 sub show { '()' }
 sub isEmpty { 1 }
+sub childless { 1 }
 
 package Tree::BinaryFP::Node;
 use Moose;
@@ -133,6 +161,19 @@ has right => (
     # isa   => quote_sub q{ $_[0]->isa('Tree::BinaryFP') },
     default => sub { $_[0]->empty },
 );
+
+sub hasLeft {
+    my $self = shift;
+    return $self->left->isEmpty ? 0 : 1;
+}
+sub hasRight {
+    my $self = shift;
+    return $self->right->isEmpty ? 0 : 1;
+}
+sub childless {
+    my $self = shift;
+    return !($self->hasLeft || $self->hasRight);
+}
 
 has value => (
     is => 'ro',
@@ -168,13 +209,75 @@ sub debug_tree {
 
     return $left . $padding . $value . $right;
 }
-sub leaves {
+sub inorder {
     my $self = shift;
     return (
-        $self->left->leaves,
-        $self->value,
-        $self->right->leaves
+        $self->left->inorder,
+        $self,
+        $self->right->inorder
     );
+}
+
+sub min {
+    my $self = shift;
+    # return $self->hasLeft ? $self->left : $self;
+    my $left = $self->left;
+    return $left->isEmpty ? $self : $left;
+}
+sub max { 
+    my $self = shift;
+    # return $self->hasRight ? $self->right : $self;
+    my $right = $self->right;
+    return $right->isEmpty ? $self : $right;
+}
+sub popMax { 
+    my $self = shift;
+    my $right = $self->right;
+    if ($right->isEmpty) {
+        return ($self, $self->left);
+    }
+    else {
+        my ($popped, $newRight) = $right->popMax;
+        return (
+            $popped,
+            $self->new({
+                %$self,
+                right => $newRight,
+            }),
+        );
+    }
+}
+
+sub A;
+sub N;
+sub E;
+*A = __PACKAGE__->mk_node( sub { 1 } );
+*E = __PACKAGE__->mk_node( sub { shift->isEmpty } );
+*N = __PACKAGE__->mk_node( sub { ! shift->isEmpty } );
+
+sub _delete {
+    my $self = shift;
+
+    #$self->run_match( any(empty,empty),
+    if ($self->childless) {
+        return $self->empty;
+    }
+
+    $self->run_match_and_sym( 
+        A(N,E),
+        sub {
+            my ($self, $node, undef) = @_;
+            return $node;
+        })
+    or do {
+    # $self->run_match( any(node,node),
+        my ($popped, $left) = $self->left->popMax;
+        return $self->new({
+            %$popped,
+            left  => $left,
+            right => $self->right,
+        });
+    };
 }
 
 1;
