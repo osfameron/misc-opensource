@@ -14,7 +14,15 @@ sub isEmpty { undef }
     }
 }
 
-sub make_maker {
+sub reverse {
+    my $self = shift;
+    return $self->new({
+        %$self,
+        left => $self->right,
+        right => $self->left,
+    });
+}
+sub mk_node {
     my ($class, $val) = @_;
     if (defined $val) {
         return sub {
@@ -97,6 +105,9 @@ package Tree::BinaryFP::Empty;
 use Moose;
 extends 'Tree::BinaryFP';
 
+sub reverse {
+    return shift;
+}
 sub _insertWith {
     my ($self, $comparison, $value) = @_;
     return $self->node_class->new({ value => $value });
