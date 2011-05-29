@@ -2,13 +2,14 @@
 use strict; use warnings;
 use Data::Dumper;
 use Test::More;
+use feature 'say';
 
 use Tree::BinaryFP;
 
 my $node = Tree::BinaryFP->empty;
 
 my @list = qw/ e d f c g b h a i /;
-my $cmp = sub { $_[0]->data cmp $_[1] };
+my $cmp = sub { $_[0]->value cmp $_[1] };
 for (@list) {
     $node = $node->insertWith($cmp, $_);
 }
@@ -17,5 +18,39 @@ diag $node->debug_tree;
 diag join ',' => $node->leaves;
 # diag Dumper($node);
 
-done_testing;
+BEGIN {
+    no strict 'refs';
+    for ('a'..'i') {
+        *$_ = Tree::BinaryFP->make_maker($_);
+    }
+    *any = Tree::BinaryFP->make_maker( sub {1} );
+}
 
+$node->run_match( e(d,f),     'e(d,f)' );
+$node->run_match( e(f,d),     'e(f,d)' );
+$node->run_match( e(undef,d), 'e(undef,d)' );
+$node->run_match( e(f,undef), 'e(f,undef)' );
+$node->run_match( any(any(any(any()))), 'any(any(any(any)))' );
+$node->run_match( any(any(any(any(any())))), 'any x5');
+$node->run_match( any(any(any(any(any(any()))))), 'any x6');
+$node->run_match( any(any(any(any(any(any(any())))))), 'any x7');
+$node->run_match( any(undef, any(undef, any)), 'any(undef, any(undef, any))' );
+
+BEGIN {
+    no strict 'refs';
+    for ('V'..'Z') {
+        *$_ = Tree::BinaryFP->make_maker($_);
+    }
+}
+my $node2 = V(W(X,undef), Y(Z, undef));
+diag $node2->debug_tree;
+say '';
+
+my $node3 = Tree::BinaryFP->node('V', 
+    Tree::BinaryFP->node('W', 
+        Tree::BinaryFP->node('X'), undef), 
+        Tree::BinaryFP->node('Y', 
+            Tree::BinaryFP->node('Z'), undef));
+diag $node3->debug_tree;
+
+done_testing;
