@@ -54,6 +54,9 @@ sub test_match {
 test_match( $node, 0, e(d,f), 'e(d,f)' );
 my ($e, $f, $d) = 
 test_match( $node, 1, e(f,d), 'e(f,d)' );
+test_match( $node, 1, e(f,any), 'e(f,any)' );
+
+test_match( $node, 1, e(any,f)->reverse, 'e(any,f)->reverse' );
 test_match( $node, 1, e(d,f)->reverse, 'e(d,f)->reverse' );
 test_match( $node, 1, e(undef,d), 'e(undef,d)' );
 test_match( $node, 1, e(f,undef), 'e(f,undef)' );

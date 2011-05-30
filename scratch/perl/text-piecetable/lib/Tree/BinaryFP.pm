@@ -18,8 +18,8 @@ sub reverse {
     my $self = shift;
     return $self->new({
         %$self,
-        left => $self->right,
-        right => $self->left,
+        left => $self->right->reverse,
+        right => $self->left->reverse,
     });
 }
 sub mk_node {
