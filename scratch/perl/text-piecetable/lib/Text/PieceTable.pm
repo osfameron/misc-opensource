@@ -52,7 +52,7 @@ sub from_string {
 sub from_file {
     my ($class, $filename) = @_;
     use File::Map 'map_file';
-    map_file my $map, $filename;
+    map_file my ($map), $filename;
     return $class->from_string($map);
 }
 
