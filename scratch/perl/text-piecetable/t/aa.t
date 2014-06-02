@@ -6,15 +6,22 @@ use Tree::AA;
 use Test::More;
 
 sub create {
-    my $tree = Tree::AA->new( cmp => sub { $_[0] cmp $_[1] } );
+    my $tree = Tree::AA->new( cmp => sub { $_[0] <=> $_[1] } );
     for (@_) {
         $tree = $tree->insert($_);
     }
+    $tree->debug_check_invariants;
+    is_deeply [ $tree->keys ], [ sort { $a <=> $b } @_ ];
     return $tree;
 }
 
-ok create(1..16)->debug_check_invariants, 'checked invariants after addition ASC';
-ok create(reverse 1..16)->debug_check_invariants, 'checked invariants after addition DESC';
+subtest 'check invariants after addition ASC' => sub {
+    create(1..16);
+};
+
+subtest 'check invariants after addition DESC' => sub {
+    create(reverse 1..16);
+};
 
 sub check_delete {
     my $tree = create(@_);
@@ -31,12 +38,19 @@ sub check_delete {
     ok ! $tree->root->level, 'Tree fully deleted';
 }
 
-check_delete(1);
-check_delete(1..2);
-check_delete(1..3);
-check_delete(1..4);
-check_delete(1..5);
-check_delete(1..16);
-check_delete(reverse 1..16);
+subtest 'pairs' => sub {
+    my $tree = create(1..4);
+    is_deeply [ $tree->pairs ], [[1,undef], [2,undef], [3,undef], [4,undef ]];
+};
+
+subtest 'Check deletions' => sub {
+    check_delete(1);
+    check_delete(1..2);
+    check_delete(1..3);
+    check_delete(1..4);
+    check_delete(1..5);
+    check_delete(1..16);
+    check_delete(reverse 1..16);
+};
 
 done_testing;

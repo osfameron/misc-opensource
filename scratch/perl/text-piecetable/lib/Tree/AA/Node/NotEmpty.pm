@@ -126,6 +126,26 @@ sub delete {
     return $tree;
 }
 
+sub keys {
+    my $self = shift;
+    return ($self->left->keys, $self->key, $self->right->keys);
+}
+
+sub values {
+    my $self = shift;
+    return ($self->left->values, $self->value, $self->right->values);
+}
+
+sub pair {
+    my $self = shift;
+    [ $self->key, $self->value ];
+}
+
+sub pairs {
+    my $self = shift;
+    return ($self->left->pairs, $self->pair, $self->right->pairs);
+}
+
 sub skew {
     my $self = shift;
 

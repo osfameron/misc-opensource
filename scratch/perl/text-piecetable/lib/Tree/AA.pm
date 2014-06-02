@@ -56,6 +56,21 @@ sub delete {
     );
 }
 
+sub keys {
+    my $self = shift;
+    return $self->root->keys;
+}
+
+sub values {
+    my $self = shift;
+    return $self->root->pairs;
+}
+
+sub pairs {
+    my $self = shift;
+    return $self->root->pairs;
+}
+
 sub debug_tree {
     my $self = shift;
     "--------\n" . $self->root->debug_tree;
