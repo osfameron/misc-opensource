@@ -157,6 +157,23 @@ sub fmap {
     );
 }
 
+sub filter {
+    # for now, let's just degrade to pairs, and rebuild.  Would it be better to do this as unions?
+
+    my ($self, $fn, $cmp_ref) = @_;
+    my @pairs = grep { $fn->(@$_) } $self->pairs;
+
+    my $tree = Tree::AA->new( cmp => $cmp_ref );
+    for (@pairs) {
+        $tree = $tree->insert(@$_);
+    }
+    return $tree;
+}
+
+# Union
+# todo implement as divide-and-conquer or hedge-union
+# e.g. http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.48.1134&rep=rep1&type=pdf
+
 sub skew {
     my $self = shift;
 

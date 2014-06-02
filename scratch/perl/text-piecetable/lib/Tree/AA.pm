@@ -76,6 +76,11 @@ sub fmap {
     return $self->root->fmap($fn);
 }
 
+sub filter {
+    my ($self, $fn) = @_;
+    return $self->root->filter($fn, $self->cmp);
+}
+
 sub debug_tree {
     my $self = shift;
     "--------\n" . $self->root->debug_tree;

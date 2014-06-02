@@ -13,6 +13,7 @@ sub insert {
 sub but { $_[0] }
 sub delete { $_[0] }
 sub fmap { $_[0] }
+sub filter { $_[0] }
 
 sub keys {}
 sub values {}

@@ -66,6 +66,16 @@ subtest 'fmap' => sub {
     is_deeply [ $tree->pairs ], [[1,2], [2,4], [3,6]];
 };
 
+subtest 'filter' => sub {
+    my $tree = Tree::AA->new( cmp => sub { $_[0] <=> $_[1] } );
+    for (1..10) {
+        $tree = $tree->insert($_, $_ * 2);
+    }
+
+    $tree = $tree->filter( sub { $_[0] % 3 and $_[1] % 5 } );
+    is_deeply [ $tree->pairs ], [[1,2], [2,4], [4,8], [7,14], [8,16]];
+};
+
 subtest 'insert with' => sub {
     my $tree = Tree::AA->new->insert( foo => 1 );
 
