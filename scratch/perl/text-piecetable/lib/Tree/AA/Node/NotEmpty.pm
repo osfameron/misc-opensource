@@ -35,9 +35,14 @@ sub insert {
         or die "Attempted to insert duplicate value $item";
     my $dir = $cmp > 0 ? 'right' : 'left';
 
-    $self->traverse->go($dir)
-        ->call(insert=>$cmp_ref, $item)->focus
-        ->skew->split;
+    return $self->but(
+        $dir => $self->$dir->insert($cmp_ref, $item),
+    )->skew->split;
+
+    # equivalent to (but following is significantly slower in tight loop)
+    # $self->traverse->go($dir)
+    # ->call(insert=>$cmp_ref, $item)->focus
+    # ->skew->split;
 }
 
 sub leaf {
@@ -69,7 +74,11 @@ sub delete {
     if (my $cmp = $cmp_ref->($item, $self->value)) {
         # Descend tree to delete there
         my $dir = $cmp > 0 ? 'right' : 'left';
-        $tree = $self->traverse->go($dir)->call(delete => $cmp_ref, $item)->focus;
+
+        # $tree = $self->traverse->go($dir)->call(delete => $cmp_ref, $item)->focus;
+        $tree = $self->but(
+            $dir => $self->$dir->delete($cmp_ref, $item)
+        );
     }
     else {
         if ($self->leaf) {
