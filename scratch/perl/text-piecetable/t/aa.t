@@ -5,10 +5,8 @@ use Data::Dumper;
 use Tree::AA;
 use Test::More;
 
-# TODO, write some actual tests
-
 sub create {
-    my $tree = Tree::AA->new;
+    my $tree = Tree::AA->new( cmp => sub { $_[0] cmp $_[1] } );
     for (@_) {
         $tree = $tree->insert($_);
     }

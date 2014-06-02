@@ -5,8 +5,8 @@ sub level { 0 }
 sub value { die }
 
 sub insert {
-    my ($self, $cmp, $item) = @_;
-    return Tree::AA::Node::NonEmpty->new(value => $item);
+    my ($self, $cmp, $key, $value, $merge_fn) = @_;
+    return Tree::AA::Node::NonEmpty->new(key => $key, value => $value);
 }
 
 # simplest algorithm is by defining most methods to just return self

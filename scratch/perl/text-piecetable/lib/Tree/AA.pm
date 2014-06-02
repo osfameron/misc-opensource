@@ -38,21 +38,21 @@ has root => (
 
 has cmp => (
     is => 'lazy',
-    default => sub { sub { $_[0] <=> $_[1] } },
+    default => sub { sub { $_[0] cmp $_[1] } },
     isa => CodeRef,
 );
 
 sub insert {
-    my ($self, $item) = @_;
+    my ($self, $key, $value, $merge_fn) = @_;
     return $self->but(
-        root => $self->root->insert($self->cmp, $item)
+        root => $self->root->insert($self->cmp, $key, $value, $merge_fn)
     );
 }
 
 sub delete {
-    my ($self, $item) = @_;
+    my ($self, $key) = @_;
     return $self->but(
-        root => $self->root->delete($self->cmp, $item)
+        root => $self->root->delete($self->cmp, $key)
     );
 }
 

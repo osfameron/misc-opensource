@@ -7,6 +7,10 @@ use List::Util 'min';
 
 my $NIL = Tree::AA::Node->new;
 
+has key => (
+    is => 'ro',
+);
+
 has value => (
     is => 'ro',
 );
@@ -30,18 +34,21 @@ has right => (
 );
 
 sub insert {
-    my ($self, $cmp_ref, $item) = @_;
-    my $cmp = $cmp_ref->($item, $self->value)
-        or die "Attempted to insert duplicate value $item";
+    my ($self, $cmp_ref, $key, $value, $merge_fn) = @_;
+    my $cmp = $cmp_ref->($key, $self->key)
+        or do {
+            die "Attempted to insert duplicate value $key" unless $merge_fn;
+            return $merge_fn->($self->value, $value, $key); # old, new, key
+        };
     my $dir = $cmp > 0 ? 'right' : 'left';
 
     return $self->but(
-        $dir => $self->$dir->insert($cmp_ref, $item),
+        $dir => $self->$dir->insert($cmp_ref, $key, $value, $merge_fn),
     )->skew->split;
 
     # equivalent to (but following is significantly slower in tight loop)
     # $self->traverse->go($dir)
-    # ->call(insert=>$cmp_ref, $item)->focus
+    # ->call(insert=>$cmp_ref, $key, $value, $merge_fn)->focus
     # ->skew->split;
 }
 
@@ -67,17 +74,17 @@ sub rightmost {
 }
 
 sub delete {
-    my ($self, $cmp_ref, $item) = @_;
+    my ($self, $cmp_ref, $key) = @_;
 
     my $tree;
 
-    if (my $cmp = $cmp_ref->($item, $self->value)) {
+    if (my $cmp = $cmp_ref->($key, $self->key)) {
         # Descend tree to delete there
         my $dir = $cmp > 0 ? 'right' : 'left';
 
-        # $tree = $self->traverse->go($dir)->call(delete => $cmp_ref, $item)->focus;
+        # $tree = $self->traverse->go($dir)->call(delete => $cmp_ref, $key)->focus;
         $tree = $self->but(
-            $dir => $self->$dir->delete($cmp_ref, $item)
+            $dir => $self->$dir->delete($cmp_ref, $key)
         );
     }
     else {
@@ -89,8 +96,8 @@ sub delete {
                 do {
                     my $pre = $self->left->rightmost;
                     $self->traverse
-                        ->set(value=>$pre->value)
-                        ->go('left')->call(delete => $cmp_ref, $pre->value)
+                        ->set(key=>$pre->key, value=>$pre->value)
+                        ->go('left')->call(delete => $cmp_ref, $pre->key)
                         ->focus;
                 }
                 :
@@ -154,7 +161,7 @@ sub split {
     return $self;
 }
 
-sub debug { my $self=shift; sprintf '(%s/%d)', $self->value, $self->level }
+sub debug { my $self=shift; sprintf '(%s/%d)', $self->key, $self->level }
 sub debug_tree {
     my ($self, $level) = @_;
     $level ||= 0;
@@ -163,7 +170,7 @@ sub debug_tree {
     my $left  = $self->left ->debug_tree($level+1);
     my $right = $self->right->debug_tree($level+1);
 
-    my $data = $self->value . ' (' . ($self->level) . ')';
+    my $data = $self->key . ' (' . ($self->level) . ')';
     $data = $data ? "$data\n" : '';
 
     return $right . $padding . $data . $left;
@@ -175,7 +182,7 @@ sub debug_check_invariants {
 
     # 1. The level of every leaf node is 1
     if ($self->leaf) {
-        die sprintf "Leaf node not level 1: %s / %d", $self->value, $level
+        die sprintf "Leaf node not level 1: %s / %d", $self->key, $level
             unless $level == 1;
     }
 
