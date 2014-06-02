@@ -60,5 +60,16 @@ sub debug_tree {
     my $self = shift;
     "--------\n" . $self->root->debug_tree;
 }
+sub debug_check_invariants {
+    my $self = shift;
+    eval {
+        $self->root->debug_check_invariants;
+    };
+    if ($@) {
+        Test::More::diag ($@ . "\n" . $self->debug_tree);
+        return 0;
+    }
+    return 1;
+}
 
 1;

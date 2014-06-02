@@ -3,29 +3,42 @@ use strict; use warnings;
 use Data::Dumper;
 
 use Tree::AA;
+use Test::More;
 
 # TODO, write some actual tests
 
-{
+sub create {
     my $tree = Tree::AA->new;
-    warn $tree->debug_tree;
-
-    for (1..16) {
+    for (@_) {
         $tree = $tree->insert($_);
     }
-    warn $tree->debug_tree;
+    return $tree;
 }
-{
-    my $tree = Tree::AA->new;
-    warn $tree->debug_tree;
 
-    for (reverse 1..16) {
-        $tree = $tree->insert($_);
-    }
-    warn $tree->debug_tree;
+ok create(1..16)->debug_check_invariants, 'checked invariants after addition ASC';
+ok create(reverse 1..16)->debug_check_invariants, 'checked invariants after addition DESC';
 
-    for (8..12) {
+sub check_delete {
+    my $tree = create(@_);
+    my $was = $tree;
+    for (@_) {
         $tree = $tree->delete($_);
+        ok $tree->debug_check_invariants, "checked invariants after deletion of $_"
+            or do {
+                diag $tree->debug_tree;
+                diag "WAS " . $was->debug_tree;
+                last;
+            }
     }
-    warn $tree->debug_tree;
+    ok ! $tree->root->level, 'Tree fully deleted';
 }
+
+check_delete(1);
+check_delete(1..2);
+check_delete(1..3);
+check_delete(1..4);
+check_delete(1..5);
+check_delete(1..16);
+check_delete(reverse 1..16);
+
+done_testing;

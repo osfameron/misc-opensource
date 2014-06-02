@@ -3,6 +3,7 @@ use Types::Standard qw( Int InstanceOf );
 use Moo;
 extends 'Tree::AA::Node';
 with 'MooX::Role::But';
+use List::Util 'min';
 
 my $NIL = Tree::AA::Node->new;
 
@@ -17,13 +18,13 @@ has level => (
 );
 
 has left => (
-    is => 'ro',
+    is => 'lazy',
     isa => InstanceOf['Tree::AA::Node'],
     default => sub { $NIL },
 );
 
 has right => (
-    is => 'ro',
+    is => 'lazy',
     isa => InstanceOf['Tree::AA::Node'],
     default => sub { $NIL },
 );
@@ -61,39 +62,59 @@ sub rightmost {
 
 sub delete {
     my ($self, $cmp_ref, $item) = @_;
+
+    my $tree;
+
     if (my $cmp = $cmp_ref->($item, $self->value)) {
         my $dir = $cmp > 0 ? 'right' : 'left';
-        return $self->but(
+        $tree = $self->but(
             $dir => $self->$dir->delete($cmp_ref, $item)
         );
     }
-    else {
+    else { # delete here
         if ($self->leaf) {
             return $NIL;
         }
-        my $tree = $self->bothkids ?
-            do {
-                my $pre = $self->left->rightmost;
-                $self->but(
-                    value => $pre->value,
-                    left => $self->left->delete($cmp_ref, $pre->value),
-                );
-            }
-            :
-            $self->firstkid;
-
-        my $min_level = $tree->level - 1;
-        if ($tree->left->level < $min_level
-         or $tree->right->level < $min_level) {
-            $tree = $tree->but(
-                level => $min_level,
-                right => $tree->right->but(
-                    level => $min_level,
-                )
-            );
+        else {
+            $tree = $self->bothkids ?
+                do {
+                    my $pre = $self->left->rightmost;
+                    $self->but(
+                        value => $pre->value,
+                        left => $self->left->delete($cmp_ref, $pre->value),
+                    );
+                }
+                :
+                $self->firstkid;
         }
-        return $tree->skew->split;
     }
+
+    my $min_level = $tree->level - 1;
+    if ($tree->left->level < $min_level
+     or $tree->right->level < $min_level) {
+
+        # summon a zipping traversal function...
+        $tree = $tree->but(
+            level => $min_level,
+            right => $tree->right->but(
+                level => min( $tree->right->level, $min_level ),
+            )
+        );
+        $tree = $tree->skew;
+        $tree = $tree->but( right => $tree->right->skew );
+        $tree = $tree->but( right => $tree->right->but( right => $tree->right->right->skew ) );
+        $tree = $tree->split;
+        $tree = $tree->but( right => $tree->right->split );
+
+        # something like
+        # $tree->traverse( sub { 
+        #   set level => $min_level; 
+        #   go 'right'; set level => min (...); top;
+        #   call 'skew'; go 'right'; call 'skew'; go 'right'; call 'skew'; top;
+        #   call 'split'; go 'right'; call 'split';
+        # });
+    }
+    return $tree;
 }
 
 sub skew {
@@ -144,6 +165,40 @@ sub debug_tree {
     $data = $data ? "$data\n" : '';
 
     return $right . $padding . $data . $left;
+}
+sub debug_check_invariants {
+    my $self = shift;
+
+    my $level = $self->level;
+
+    # 1. The level of every leaf node is 1
+    if ($self->leaf) {
+        die sprintf "Leaf node not level 1: %s / %d", $self->value, $level
+            unless $level == 1;
+    }
+
+    # 2. The level of every left child is exactly one less than that of its parent.
+    my $L = $self->left;
+    die sprintf "Left child (%d) == parent (%d) - 1", $L->level, $level
+        unless $L->level == $level - 1;
+
+    # 3. The level of every right child is equal to or one less than that of its parent.
+    my $R = $self->right;
+    die sprintf "Right child (%d) == parent (%d) OR - 1", $R->level, $level
+        unless $R->level == $level - 1 or $R->level == $level;
+
+    # 4. The level of every right grandchild is strictly less than that of its grandparent.
+    my $RR = $R->right;
+    die sprintf "Right grandchild child (%d) < parent (%d)", $RR->level, $level
+        unless $RR->level < $level;
+
+    # 5. Every node of level greater than one has two children.
+    if ($level > 1) {
+        die sprintf "Level %d but does not have both kids" unless $self->bothkids;
+    }
+
+    $self->left->debug_check_invariants;
+    $self->right->debug_check_invariants;
 }
 
 1;
