@@ -34,9 +34,10 @@ sub insert {
     my $cmp = $cmp_ref->($item, $self->value)
         or die "Attempted to insert duplicate value $item";
     my $dir = $cmp > 0 ? 'right' : 'left';
-    return $self->but(
-        $dir => $self->$dir->insert($cmp_ref, $item)
-    )->skew->split;
+
+    $self->traverse->go($dir)
+        ->call(insert=>$cmp_ref, $item)->focus
+        ->skew->split;
 }
 
 sub leaf {
@@ -66,12 +67,11 @@ sub delete {
     my $tree;
 
     if (my $cmp = $cmp_ref->($item, $self->value)) {
+        # Descend tree to delete there
         my $dir = $cmp > 0 ? 'right' : 'left';
-        $tree = $self->but(
-            $dir => $self->$dir->delete($cmp_ref, $item)
-        );
+        $tree = $self->traverse->go($dir)->call(delete => $cmp_ref, $item)->focus;
     }
-    else { # delete here
+    else {
         if ($self->leaf) {
             return $NIL;
         }
@@ -79,10 +79,10 @@ sub delete {
             $tree = $self->bothkids ?
                 do {
                     my $pre = $self->left->rightmost;
-                    $self->but(
-                        value => $pre->value,
-                        left => $self->left->delete($cmp_ref, $pre->value),
-                    );
+                    $self->traverse
+                        ->set(value=>$pre->value)
+                        ->go('left')->call(delete => $cmp_ref, $pre->value)
+                        ->focus;
                 }
                 :
                 $self->firstkid;
@@ -90,29 +90,22 @@ sub delete {
     }
 
     my $min_level = $tree->level - 1;
+
     if ($tree->left->level < $min_level
      or $tree->right->level < $min_level) {
 
-        # summon a zipping traversal function...
-        $tree = $tree->but(
-            level => $min_level,
-            right => $tree->right->but(
-                level => min( $tree->right->level, $min_level ),
-            )
-        );
-        $tree = $tree->skew;
-        $tree = $tree->but( right => $tree->right->skew );
-        $tree = $tree->but( right => $tree->right->but( right => $tree->right->right->skew ) );
-        $tree = $tree->split;
-        $tree = $tree->but( right => $tree->right->split );
-
-        # something like
-        # $tree->traverse( sub { 
-        #   set level => $min_level; 
-        #   go 'right'; set level => min (...); top;
-        #   call 'skew'; go 'right'; call 'skew'; go 'right'; call 'skew'; top;
-        #   call 'split'; go 'right'; call 'split';
-        # });
+        $tree = $tree->traverse
+            ->set( level => $min_level )
+                ->go('right')->set( 
+                    level => min( $min_level, $tree->right->level ) )
+            ->top
+            ->call('skew')
+                ->go('right')->call('skew')
+                    ->go('right')->call('skew')
+            ->top
+            ->call('split')
+                ->go('right')->call('split')
+            ->focus;
     }
     return $tree;
 }
