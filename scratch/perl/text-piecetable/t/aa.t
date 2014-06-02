@@ -4,6 +4,7 @@ use Data::Dumper;
 
 use Tree::AA;
 use Test::More;
+use Test::Exception;
 
 sub create {
     my $tree = Tree::AA->new( cmp => sub { $_[0] <=> $_[1] } );
@@ -51,6 +52,32 @@ subtest 'Check deletions' => sub {
     check_delete(1..5);
     check_delete(1..16);
     check_delete(reverse 1..16);
+};
+
+subtest 'fmap' => sub {
+    my $tree = Tree::AA->new( cmp => sub { $_[0] <=> $_[1] } );
+    for (1..3) {
+        $tree = $tree->insert($_, $_);
+    }
+    is_deeply [ $tree->pairs ], [[1,1], [2,2], [3,3]];
+
+    $tree = $tree->fmap( sub { $_[0] * 2 } );
+
+    is_deeply [ $tree->pairs ], [[1,2], [2,4], [3,6]];
+};
+
+subtest 'insert with' => sub {
+    my $tree = Tree::AA->new->insert( foo => 1 );
+
+    dies_ok {
+        $tree = $tree->insert( foo => 1 );
+    } "By default, can't insert duplicate";
+
+    lives_ok {
+        $tree = $tree->insert( foo => 2, sub { $_[0] + $_[1] } );
+        is_deeply [ $tree->pairs ], [[foo => 3 ]], 'merged value is ok';
+    } 'Can insert when a sub is provided';
+
 };
 
 done_testing;

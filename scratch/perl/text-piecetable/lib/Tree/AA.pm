@@ -71,6 +71,11 @@ sub pairs {
     return $self->root->pairs;
 }
 
+sub fmap {
+    my ($self, $fn) = @_;
+    return $self->root->fmap($fn);
+}
+
 sub debug_tree {
     my $self = shift;
     "--------\n" . $self->root->debug_tree;

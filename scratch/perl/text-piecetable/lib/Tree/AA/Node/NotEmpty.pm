@@ -38,7 +38,9 @@ sub insert {
     my $cmp = $cmp_ref->($key, $self->key)
         or do {
             die "Attempted to insert duplicate value $key" unless $merge_fn;
-            return $merge_fn->($self->value, $value, $key); # old, new, key
+            return $self->but(
+                value => $merge_fn->($self->value, $value, $key), # old, new, key
+            );
         };
     my $dir = $cmp > 0 ? 'right' : 'left';
 
@@ -144,6 +146,15 @@ sub pair {
 sub pairs {
     my $self = shift;
     return ($self->left->pairs, $self->pair, $self->right->pairs);
+}
+
+sub fmap {
+    my ($self, $fn) = @_;
+    $self->but(
+        value => $fn->($self->value, $self->key),
+        left => $self->left->fmap($fn),
+        right => $self->right->fmap($fn),
+    );
 }
 
 sub skew {

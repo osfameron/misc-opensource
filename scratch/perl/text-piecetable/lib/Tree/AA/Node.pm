@@ -12,6 +12,7 @@ sub insert {
 # simplest algorithm is by defining most methods to just return self
 sub but { $_[0] }
 sub delete { $_[0] }
+sub fmap { $_[0] }
 
 sub keys {}
 sub values {}
