@@ -7,10 +7,7 @@ use Test::More;
 use Test::Exception;
 
 sub create {
-    my $tree = Tree::AA->new( cmp => sub { $_[0] <=> $_[1] } );
-    for (@_) {
-        $tree = $tree->insert($_);
-    }
+    my $tree = Tree::AA->fromListWith( sub { $_[0] <=> $_[1] }, map [$_], @_ );
     $tree->debug_check_invariants;
     is_deeply [ $tree->keys ], [ sort { $a <=> $b } @_ ];
     return $tree;

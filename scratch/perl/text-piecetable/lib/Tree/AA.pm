@@ -7,8 +7,8 @@ Tree::AA - a simple, purely functional, balanced tree
     my $tree = Tree::AA->new(
         cmp => sub { $_[0] <=> $_[1] }, # the default
     );
-    $tree = $tree->insert( 5 );
-    $tree = $tree->insert( 10 );
+    $tree = $tree->insert( 5 => 'five' );
+    $tree = $tree->insert( 10 => 'ten' );
 
     $tree = $tree->delete( 5 );
 
@@ -79,6 +79,21 @@ sub fmap {
 sub filter {
     my ($self, $fn) = @_;
     return $self->root->filter($fn, $self->cmp);
+}
+
+sub fromList {
+    my $class = shift;
+    return $class->fromListWith(undef, @_);
+}
+
+sub fromListWith {
+    my $class = shift;
+    my $cmp = shift;
+    my $tree = $class->new( $cmp ? ( cmp => $cmp ) : () );
+    for my $pair (@_) {
+        $tree = $tree->insert(@$pair); # key => value
+    }
+    return $tree;
 }
 
 sub debug_tree {
