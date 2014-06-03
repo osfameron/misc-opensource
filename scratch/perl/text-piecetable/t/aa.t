@@ -8,7 +8,7 @@ use Test::Exception;
 
 sub create {
     my $tree = Tree::AA->fromListWith( sub { $_[0] <=> $_[1] }, map [$_], @_ );
-    $tree->debug_check_invariants;
+    ok $tree->debug_check_invariants, 'invariants ok';
     is_deeply [ $tree->keys ], [ sort { $a <=> $b } @_ ];
     return $tree;
 }
@@ -85,6 +85,13 @@ subtest 'insert with' => sub {
         is_deeply [ $tree->pairs ], [[foo => 3 ]], 'merged value is ok';
     } 'Can insert when a sub is provided';
 
+};
+
+subtest 'fromSortedList' => sub {
+    for my $size (0..16) {
+        my $tree = Tree::AA->fromSortedListWith( sub { $_[0] <=> $_[1] }, map [$_], 0..$size );
+        ok $tree->debug_check_invariants, 'invariants ok';
+    }
 };
 
 done_testing;

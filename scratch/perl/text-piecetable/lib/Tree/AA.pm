@@ -96,6 +96,61 @@ sub fromListWith {
     return $tree;
 }
 
+sub fromSortedList {
+    my $class = shift;
+    return $class->fromSortedListWith(undef, @_);
+}
+
+sub fromSortedListWith {
+    my $class = shift;
+    my $cmp = shift; # but we ignore, as we assume that the list is sorted already
+    my $root = $class->_fromSortedListWith(\@_, 0, scalar @_);
+    return $class->new(
+        root => $root,
+        $cmp ? ( cmp => $cmp ) : (),
+    );
+}
+
+my $NIL = Tree::AA::Node->new; # TODO, refactor with ::Node::NonEmpty
+
+sub _fromSortedListWith {
+    my ($class, $array, $from, $to) = @_;
+    my $len = $to - $from or return $NIL;
+    die "RARR $from - $to reversed" if $len < 0;
+    if ($len == 1) {
+        my $item = $array->[$from];
+        return Tree::AA::Node::NonEmpty->new( 
+            key => $item->[0],
+            value => $item->[1]
+        );
+    }
+    if ($len == 2) {
+        my $item = $array->[$from];
+        my $next = $array->[$from+1];
+        return Tree::AA::Node::NonEmpty->new( 
+            key => $item->[0],
+            value => $item->[1],
+            right => Tree::AA::Node::NonEmpty->new(
+                key => $next->[0],
+                value => $next->[1],
+            ),
+        );
+    }
+    my $pivot = int(($len-1) / 2); # 3-1/2=1, e.g. 2nd elem; 4-1/2=1, e.g. 2nd elem, so more elems on right hand side
+
+    my $left  = $class->_fromSortedListWith($array, $from, $from + $pivot);
+    my $right = $class->_fromSortedListWith($array, $from + $pivot+1, $to);
+
+    my $item = $array->[$from + $pivot];
+    return Tree::AA::Node::NonEmpty->new( 
+        key => $item->[0],
+        value => $item->[1],
+        level => $left->level + 1,
+        left => $left,
+        right => $right,
+    );
+}
+
 sub debug_tree {
     my $self = shift;
     "--------\n" . $self->root->debug_tree;
